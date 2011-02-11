@@ -1,0 +1,26 @@
+LazyWrite is build to have the best compromise between a good page load and write a complex external data in your page (like Advertising).
+This allow you to control when should those data start to render or load.
+
+Advantages
+* Increase highly the page load
+* Stop freezing client navigator
+* Forget iframe calls
+* No other library required (like jQuery)
+* No change of existing code
+
+How to use:
+1. load the lazywrite.js before you start to use 'document.write()' or 'document.writeln()'.
+2. use 'LazyWrite.start()' to start render or load those resources.
+
+Example: Google AdSense
+<script type="text/javascript" src="lazywrite.js"></script>
+<script type="text/javascript">
+    google_ad_client = "ca-pub-5840687392233497";
+    google_ad_slot = "9902234827";
+    google_ad_width = 728;
+    google_ad_height = 90;
+    document.write('<script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js" />');
+</script>
+<script type="text/javascript">
+    $(document).ready(LazyWrite.start);  // use jQuery
+</script>
