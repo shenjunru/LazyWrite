@@ -21,7 +21,7 @@ _renderFragment = document.createDocumentFragment(),
 _renderParser   = document.createElement('div'),
 _scriptHolder   = undefined, // for multiple document.write in one inside script.
 _scriptBlocker  = undefined, // for external loading and stack executing.
-_prevHolder     = undefined, // for same render holder checking.
+_previousHolder = undefined, // for same render holder checking.
 _parallelHolder = undefined, // for render in same render holder.
 // data storage
 _writeStack  = [], // store the HTML that use document.write in the page
@@ -51,8 +51,8 @@ _replaceElement = function(element, other){
     console.log('==REPLACE ELEMENT=================================');
     console.log('original: ' + (element.id || element.nodeName));
     console.log('original content: ' + element.innerHTML);
-    console.log('replace: ' + (replace.id || replace.nodeName));
-    console.log('replace content: ' + (replace.innerHTML || replace.src || replace.text || ('[' + replace.childNodes.length + ']')));
+    console.log('replace: ' + (other.id || other.nodeName));
+    console.log('replace content: ' + (other.innerHTML || other.src || other.text || ('[' + other.childNodes.length + ']')));
     return element.parentNode.replaceChild(other, element) && other;
 },
 
@@ -128,7 +128,7 @@ _loadScript = function(scriptHolder, script){
         _appendElement(scriptHolder, script);
 
         // remove script holder, if it still in the document
-        _removeElement(scriptHolder)
+        _removeElement(scriptHolder);
     }
 },
 
@@ -154,19 +154,19 @@ _executeScript = function(renderHolder, item){
 
 // execute the global scripts stack
 // return continue flag
-_executeScripts = function(renderHolder, flag/* this isn't function paramter*/){
+_executeScripts = function(renderHolder, flag/* this isn't a parameter */){
     while ((flag = _executeScript(renderHolder, _scriptStack.shift())));
     return flag !== false && !_scriptBlocker;
 },
 
 // render one document.write stuff
 // return continue flag
-_renderHTML = function(renderHolder, html){
+_renderHTML = function(renderHolder, html, inside){
     console.log('==RENDER HTML====================================');
     console.log('render holder: ' + renderHolder.id);
-    console.log('previous holder: ' + (_prevHolder ? _prevHolder.id : 'none'));
+    console.log('previous holder: ' + (_previousHolder ? _previousHolder.id : 'none'));
     console.log('render holder parent: ' + (renderHolder.parentNode ? renderHolder.parentNode.id : 'none'));
-    console.log('previous holder parent: ' + (_prevHolder && _prevHolder.parentNode ? _prevHolder.parentNode.id : 'none'));
+    console.log('previous holder parent: ' + (_previousHolder && _previousHolder.parentNode ? _previousHolder.parentNode.id : 'none'));
     console.log('html: ' + html);
     
     // convert HTML
@@ -197,7 +197,7 @@ _renderHTML = function(renderHolder, html){
     }
     
     // render in the document
-    if (_prevHolder === renderHolder) {
+    if (_previousHolder === renderHolder) {
         // insert before the parallel holder
         _parallelHolder.parentNode.insertBefore(_renderFragment, _parallelHolder);
     } else {
@@ -205,11 +205,14 @@ _renderHTML = function(renderHolder, html){
         _parallelHolder = _renderFragment.appendChild(_parallelHolder || _createHolder('parallel_holder_'));
         
         // replace holder in the document
-        _replaceElement(renderHolder, _renderFragment);
+        inside
+            // handle IE6 subsequent replaceChild() issue in Windows XP
+            ? renderHolder.parentNode.insertBefore(_renderFragment, renderHolder.nextSibling)
+            :_replaceElement(renderHolder, _renderFragment);
     }
     
     // store current render holder as previous holder
-    _prevHolder = renderHolder;
+    _previousHolder = renderHolder;
     
     // execute scripts and return continue flag
     if (stack.length) _continued = _executeScripts(renderHolder);
@@ -235,6 +238,15 @@ _renderStack = function(flag){
         console.log('>> END OF LAZY WRITE <<');
         // remove parallel holder, if it exists
         _parallelHolder && _removeElement(_parallelHolder);
+        
+        // destroy objects
+        _renderFragment
+            = _renderParser
+            = _scriptHolder
+            = _scriptBlocker
+            = _previousHolder
+            = _parallelHolder
+            = undefined;
         
         // restore original functions
 //        document.write = _write;
@@ -262,7 +274,7 @@ document.writeln = document.write = function(){
     if (_started) {
         // render HTML directly
         try {
-            _renderHTML(_scriptHolder, html);
+            _renderHTML(_scriptHolder, html, true);
         } catch (e) {
             console.log(e);
         }
@@ -271,7 +283,8 @@ document.writeln = document.write = function(){
         _writeStack.push({ id: holder = 'document_write_' + _index++, html: html });
         
         // write a place holder in the document
-        _write.call(document, '<span id="' + holder + '"></span>');
+        holder = '<span id="' + holder + '"></span>';
+        _write.call ? _write.call(document, holder) : _write(holder) /* handle IE issue */;
     }
 };
 

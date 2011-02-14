@@ -21,7 +21,7 @@ _renderFragment = document.createDocumentFragment(),
 _renderParser   = document.createElement('div'),
 _scriptHolder   = undefined, // for multiple document.write in one inside script.
 _scriptBlocker  = undefined, // for external loading and stack executing.
-_prevHolder     = undefined, // for same render holder checking.
+_previousHolder = undefined, // for same render holder checking.
 _parallelHolder = undefined, // for render in same render holder.
 // data storage
 _writeStack  = [], // store the HTML that use document.write in the page
@@ -111,13 +111,13 @@ _loadScript = function(scriptHolder, script){
         _appendElement(scriptHolder, script);
 
         // remove script holder, if it still in the document
-        _removeElement(scriptHolder)
+        _removeElement(scriptHolder);
     }
 },
 
 // execute one item of scripts stack
 // return continue flag
-_executeScript = function(renderHolder, item){
+_executeScript = function(item){
     if (item) {
         // set the script holder as the render holder for inside 'document.write'.
         if (!_scriptBlocker) _scriptHolder = item.holder;
@@ -132,14 +132,14 @@ _executeScript = function(renderHolder, item){
 
 // execute the global scripts stack
 // return continue flag
-_executeScripts = function(renderHolder, flag/* this isn't function paramter*/){
-    while ((flag = _executeScript(renderHolder, _scriptStack.shift())));
+_executeScripts = function(flag/* this isn't a parameter */){
+    while ((flag = _executeScript(_scriptStack.shift())));
     return flag !== false && !_scriptBlocker;
 },
 
 // render one document.write stuff
 // return continue flag
-_renderHTML = function(renderHolder, html){
+_renderHTML = function(renderHolder, html, inside){
     // convert HTML
     if (_isIE) {
         // handle IE innerHTML issue
@@ -168,7 +168,7 @@ _renderHTML = function(renderHolder, html){
     }
     
     // render in the document
-    if (_prevHolder === renderHolder) {
+    if (_previousHolder === renderHolder) {
         // insert before the parallel holder
         _parallelHolder.parentNode.insertBefore(_renderFragment, _parallelHolder);
     } else {
@@ -176,14 +176,17 @@ _renderHTML = function(renderHolder, html){
         _parallelHolder = _renderFragment.appendChild(_parallelHolder || _createHolder());
         
         // replace holder in the document
-        _replaceElement(renderHolder, _renderFragment);
+        inside
+            // handle IE6 subsequent replaceChild() issue in Windows XP
+            ? renderHolder.parentNode.insertBefore(_renderFragment, renderHolder.nextSibling)
+            :_replaceElement(renderHolder, _renderFragment);
     }
     
     // store current render holder as previous holder
-    _prevHolder = renderHolder;
+    _previousHolder = renderHolder;
     
     // execute scripts and return continue flag
-    if (stack.length) _continued = _executeScripts(renderHolder);
+    if (stack.length) _continued = _executeScripts();
     
     // return continue flag
     return _continued;
@@ -201,6 +204,15 @@ _renderStack = function(flag){
     if (_continued && !_writeStack.length) {
         // remove parallel holder, if it exists
         _parallelHolder && _removeElement(_parallelHolder);
+        
+        // destroy objects
+        _renderFragment
+            = _renderParser
+            = _scriptHolder
+            = _scriptBlocker
+            = _previousHolder
+            = _parallelHolder
+            = undefined;
         
         // restore original functions
         document.write = _write;
@@ -220,14 +232,15 @@ document.writeln = document.write = function(){
     if (_started) {
         // render HTML directly
         try {
-            _renderHTML(_scriptHolder, html);
+            _renderHTML(_scriptHolder, html, true);
         } catch (e) {}
     } else {
         // add to write stack
         _writeStack.push({ id: holder = 'document_write_' + _index++, html: html });
         
         // write a place holder in the document
-        _write.call(document, '<span id="' + holder + '"></span>');
+        holder = '<span id="' + holder + '"></span>';
+        _write.call ? _write.call(document, holder) : _write(holder) /* handle IE issue */;
     }
 };
 
