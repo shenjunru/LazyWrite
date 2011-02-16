@@ -1,6 +1,6 @@
 /*!
  * LazyWrite - deferred document.write implementation
- * Version: 1.0 beta build 20110212
+ * Version: 1.0 beta build 20110216
  * Website: http://github.com/xfsn/LazyWrite
  * 
  * Copyright (c) 2011 Shen Junru
@@ -271,7 +271,7 @@ document.writeln = document.write = function(){
     console.log('started: ' + _started);
     console.log('script holder: ' + (_scriptHolder ? _scriptHolder.id : 'none'));
     console.log('html: ' + html);
-    if (_started) {
+    if (html) if (_started) {
         // render HTML directly
         try {
             _renderHTML(_scriptHolder, html, true);
@@ -292,6 +292,13 @@ window.LazyWrite = {
     // original document.write function
     write: function(){
         _write.apply(document, arguments);
+    },
+    // add custom holder and content to write stack
+    render: function(holder, content){
+        holder && content && _writeStack.push({
+            id: holder,
+            html: content
+        });
     },
     // start to process the whole stack
     start: function(){
