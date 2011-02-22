@@ -1,13 +1,13 @@
 /*!
  * LazyWrite - deferred document.write implementation
- * Version: 1.0 beta build 20110216
+ * Version: 1.0 beta build 20110221
  * Website: http://github.com/xfsn/LazyWrite
  * 
  * Copyright (c) 2011 Shen Junru
  * Released under the MIT License.
  */
 
-(function(document, undefined){
+(function(document, globalEval, undefined){
 
 var
 _index = 1,
@@ -104,12 +104,12 @@ _loadScript = function(scriptHolder, script){
             _appendElement(scriptHolder, script);
         });
     } else {
-        // handle interrupted by script error
-        script.text = 'try{' + script.text + '}catch(_ex_){}';
+        // handle FF 3.6 script non-immediate-execute issue
+        // use eval instead insert script element to document
+        try {
+            globalEval(script.text);
+        } catch (ex) {}
         
-        // immediate execute the script
-        _appendElement(scriptHolder, script);
-
         // remove script holder, if it still in the document
         _removeElement(scriptHolder);
     }
@@ -233,7 +233,7 @@ document.writeln = document.write = function(){
         // render HTML directly
         try {
             _renderHTML(_scriptHolder, html, true);
-        } catch (e) {}
+        } catch (ex) {}
     } else {
         // add to write stack
         _writeStack.push({ id: holder = 'document_write_' + _index++, html: html });
@@ -264,4 +264,6 @@ window.LazyWrite = {
     }
 };
 
-})(document);
+})(document, function(){
+    eval.apply(window, arguments);
+});
