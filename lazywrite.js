@@ -1,6 +1,6 @@
 /*!
  * LazyWrite - deferred document.write implementation
- * Version: 1.0 beta build 20110221
+ * Version: 1.0 beta build 20110224
  * Website: http://github.com/xfsn/LazyWrite
  * 
  * Copyright (c) 2011 Shen Junru
@@ -13,6 +13,7 @@ var
 _index = 1,
 _isIE = !-[1,],
 _loadEvent = _isIE ? 'onreadystatechange' : 'onload',
+_scriptFix = /^\s*<!--/,
 // original functions
 _write   = document.write,
 _writeln = document.writeln,
@@ -107,7 +108,8 @@ _loadScript = function(scriptHolder, script){
         // handle FF 3.6 script non-immediate-execute issue
         // use eval instead insert script element to document
         try {
-            globalEval(script.text);
+            // handle IE eval() SyntaxError.
+            globalEval(script.text.replace(_scriptFix, ''));
         } catch (ex) {}
         
         // remove script holder, if it still in the document
