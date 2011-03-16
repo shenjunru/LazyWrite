@@ -1,6 +1,6 @@
 /*!
  * LazyWrite - deferred document.write implementation
- * Version: 1.0 beta build 20110224
+ * Version: 1.0 beta build 20110316
  * Website: http://github.com/xfsn/LazyWrite
  * 
  * Copyright (c) 2011 Shen Junru
@@ -11,7 +11,7 @@
 
 var
 _index = 1,
-_isIE = !-[1,],
+_isIE = /*@cc_on!@*/!1,
 _loadEvent = _isIE ? 'onreadystatechange' : 'onload',
 _scriptFix = /^\s*<!--/,
 // original functions
