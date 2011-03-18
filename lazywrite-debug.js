@@ -1,18 +1,17 @@
 /*!
  * LazyWrite - deferred document.write implementation
- * Version: 1.0 beta build 20110316
+ * Version: 1.0 beta build 20110318
  * Website: http://github.com/xfsn/LazyWrite
  * 
  * Copyright (c) 2011 Shen Junru
  * Released under the MIT License.
  */
 
-(function(document, globalEval, undefined){
+(function(document, isIE, globalEval, undefined){
 
 var
 _index = 1,
-_isIE = /*@cc_on!@*/!1,
-_loadEvent = _isIE ? 'onreadystatechange' : 'onload',
+_loadEvent = isIE ? 'onreadystatechange' : 'onload',
 _scriptFix = /^\s*<!--/,
 // original functions
 _write   = document.write,
@@ -85,7 +84,7 @@ _loadScript = function(scriptHolder, script){
             console.log('load state: ' + (script.readyState || '->onload'));
             console.log('load flag: '  + script.loaded);
             console.log('continue: '   + _continued);
-            var state = _isIE && script.readyState;
+            var state = isIE && script.readyState;
             if (!script.done && (!state || /complete|loaded/.test(state))) {
                 // handle IE readyState issue, simulate the 'complete' readyState
                 // waiting the load script be executed.
@@ -174,7 +173,7 @@ _renderHTML = function(renderHolder, html, inside){
     console.log('html: ' + html);
     
     // convert HTML
-    if (_isIE) {
+    if (isIE) {
         // handle IE innerHTML issue
         _renderParser.innerHTML = '<img />' + html;
         _removeElement(_renderParser.firstChild);
@@ -294,9 +293,10 @@ document.writeln = document.write = function(){
 
 window.LazyWrite = {
     // original document.write function
-    write: function(){
+    write: _write.apply ? function(){
         _write.apply(document, arguments);
-    },
+    } : _write /* handle IE issue */,
+    
     // add custom holder and content to write stack
     render: function(holder, content){
         holder && content && _writeStack.push({
@@ -304,6 +304,7 @@ window.LazyWrite = {
             html: content
         });
     },
+    
     // start to process the whole stack
     start: function(){
         if (_started) return;
@@ -313,7 +314,7 @@ window.LazyWrite = {
     }
 };
 
-})(document, function(){
+})(document, /*@cc_on!@*/!1, function(){
     eval.apply(window, arguments);
 });
 

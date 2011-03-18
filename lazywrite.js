@@ -7,12 +7,11 @@
  * Released under the MIT License.
  */
 
-(function(document, globalEval, undefined){
+(function(document, isIE, globalEval, undefined){
 
 var
 _index = 1,
-_isIE = /*@cc_on!@*/!1,
-_loadEvent = _isIE ? 'onreadystatechange' : 'onload',
+_loadEvent = isIE ? 'onreadystatechange' : 'onload',
 _scriptFix = /^\s*<!--/,
 // original functions
 _write   = document.write,
@@ -71,7 +70,7 @@ _cloneScript = function cloneScript(script){
 _loadScript = function(scriptHolder, script){
     if (script.src) {
         script[_loadEvent] = function(){
-            var state = _isIE && script.readyState;
+            var state = isIE && script.readyState;
             if (!script.done && (!state || /complete|loaded/.test(state))) {
                 // handle IE readyState issue, simulate the 'complete' readyState
                 // waiting the load script be executed.
@@ -143,7 +142,7 @@ _executeScripts = function(flag/* this isn't a parameter */){
 // return continue flag
 _renderHTML = function(renderHolder, html, inside){
     // convert HTML
-    if (_isIE) {
+    if (isIE) {
         // handle IE innerHTML issue
         _renderParser.innerHTML = '<img />' + html;
         _removeElement(_renderParser.firstChild);
@@ -248,9 +247,10 @@ document.writeln = document.write = function(){
 
 window.LazyWrite = {
     // original document.write function
-    write: function(){
+    write: _write.apply ? function(){
         _write.apply(document, arguments);
-    },
+    } : _write /* handle IE issue */,
+    
     // add custom holder and content to write stack
     render: function(holder, content){
         holder && content && _writeStack.push({
@@ -258,6 +258,7 @@ window.LazyWrite = {
             html: content
         });
     },
+    
     // start to process the whole stack
     start: function(){
         if (_started) return;
@@ -266,6 +267,6 @@ window.LazyWrite = {
     }
 };
 
-})(document, function(){
+})(document, /*@cc_on!@*/!1, function(){
     eval.apply(window, arguments);
 });
