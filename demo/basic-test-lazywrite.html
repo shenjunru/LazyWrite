@@ -1,0 +1,43 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Lazy Write: Base Test</title>
+    <script type="text/javascript" src="../lazywrite-min.js"></script>
+</head>
+<body>
+    <h1>Base Test</h1>
+    <hr />
+    <script type="text/javascript">
+        document.write('<b>test - 1</b><script type="text/javascript">document.write("<i> ok</i>")<\/script>');
+    </script>
+    <br>
+    <script type="text/javascript">
+        document.write('<b>test - 2</b><script type="text/javascript">document.write(" ok1 ");document.write(" ok2")<\/script>');
+    </script>
+    <br>
+    <script type="text/javascript">
+        document.write('<b>test - 3</b><script type="text/javascript">document.write(" ok1 ");<\/script><script type="text/javascript">document.write(" ok2")<\/script>');
+    </script>
+    <br>
+    <script type="text/javascript">
+        document.write('<b>test - 4</b><script type="text/javascript">document.write(" ok");<\/script><script type="text/javascript" src="basic-test-write.php" />');
+    </script>
+    <br>
+    <script type="text/javascript">
+        document.write('<b>test - 5</b><script type="text/javascript">document.write(" ok");<\/script><script type="text/javascript" src="basic-test-write.js" />');
+    </script>
+    <br>
+    <script type="text/javascript">
+        document.write('<b>test - 6</b><script type="text/javascript">document.write(" ok");<\/script><script type="text/javascript" src="basic-test-write.js" />');
+    </script>
+    <br>
+    <script type="text/javascript">
+        document.write('<b>test - 7</b><script type="text/javascript">alert(" ok")<\/script>');
+    </script>
+    <br>
+    <hr />
+    The End!
+    <script type="text/javascript">LazyWrite.start();</script>
+</body>
+</html>
