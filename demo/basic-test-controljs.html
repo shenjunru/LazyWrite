@@ -9,31 +9,31 @@
     <h1>Base Test</h1>
     <hr />
     <script type="text/cjs">
-        document.write('<b>test - 1</b><script>document.write("<i> ok</i>")<\/script>');
+        document.write('<b>test - 1</b><script type="text/javascript">document.write("<i> ok</i>")<\/script>');
     </script>
     <br>
     <script type="text/cjs">
-        document.write('<b>test - 2</b><script>document.write(" ok1 ");document.write(" ok2")<\/script>');
+        document.write('<b>test - 2</b><script type="text/javascript">document.write(" ok1 ");document.write(" ok2")<\/script>');
     </script>
     <br>
     <script type="text/cjs">
-        document.write('<b>test - 3</b><script>document.write(" ok1 ");<\/script><script>document.write(" ok2")<\/script>');
+        document.write('<b>test - 3</b><script type="text/javascript">document.write(" ok1 ");<\/script><script>document.write(" ok2")<\/script>');
     </script>
     <br>
     <script type="text/cjs">
-        document.write('<b>test - 4</b><script>document.write(" ok");<\/script><script src="basic-test-write.php" />');
+        document.write('<b>test - 4</b><script type="text/javascript">document.write(" ok");<\/script><script src="basic-test-write.php"><\/script>');
     </script>
     <br>
     <script type="text/cjs">
-        document.write('<b>test - 5</b><script>document.write(" ok");<\/script><script src="basic-test-write.js" />');
+        document.write('<b>test - 5</b><script type="text/javascript">document.write(" ok");<\/script><script src="basic-test-write.js"><\/script>');
     </script>
     <br>
     <script type="text/cjs">
-        document.write('<b>test - 6</b><script>document.write(" ok");<\/script><script src="basic-test-write.js" />');
+        document.write('<b>test - 6</b><script type="text/javascript">document.write(" ok");<\/script><script src="basic-test-write.js"><\/script>');
     </script>
     <br>
     <script type="text/cjs">
-        document.write('<b>test - 7</b><script type="text\/javascriptcjs">alert(" ok")<\/script>');
+        document.write('<b>test - 7</b><script type="text/javascript">alert(" ok")<\/script>');
     </script>
     <br>
     <hr />
