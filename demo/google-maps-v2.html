@@ -1,0 +1,60 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <title>Google Maps JavaScript API Example: Simple Map</title>
+    <script type="text/lazyjs" src="http://maps.google.com/maps?file=api&amp;v=2&amp;sensor=false&amp;key=ABQIAAAAzr2EBOXUKnm_jVnk0OJI7xSosDVG8KKPE1-m51RBrvYughuyMxQ-i1QfUnH94QxWIa6N4U6MouMmBA"></script>
+    <script type="text/lazyjs">
+    if (GBrowserIsCompatible()) {
+        var map = new GMap2(document.getElementById("map_canvas"));
+        map.setCenter(new GLatLng(37.4419, -122.1419), 13);
+        map.setUIToDefault();
+    }
+    </script>
+</head>
+<body>
+    <div id="map_canvas" style="width: 500px; height: 300px"></div>
+    
+    <script type="text/javascript" src="../lazywrite-min.js"></script>
+    <script type="text/javascript">
+    /**
+     * this is an example of Google Maps with LazyWrite
+     * 
+     * the original example by google:
+     * http://code.google.com/intl/en/apis/maps/documentation/javascript/v2/examples/map-simple.html
+     */
+    (function(){
+        var temp = document.createElement('div');
+        
+        /* get all 'text/lazyjs' script elements */
+        /* those scripts will not be auto executed by browser */
+        var lazyScripts = document.querySelectorAll('script[type="text/lazyjs"]');
+        // querySelectorAll does not work for whole browsers
+        // can use other to replace it (ex: jquery('script[type="text/lazyjs"]'))
+        
+        /* parse those elements to html */
+        lazyScripts = [].slice.call(lazyScripts);
+        lazyScripts.forEach(function(script){
+            script.type = 'text/javascript';
+            temp.appendChild(script);
+        });
+        // forEach does not work for whole browsers
+        // can use for(;;) or while() instead
+        
+        var content = temp.innerHTML;
+        temp.innerHTML = '';
+        
+        /* inserts holder element to document */
+        // it will be removed after LazyWrite rendered this holder' content
+        temp.id = 'lazy-map-' + (new Date).getTime();
+        document.body.parentNode.appendChild(temp);
+        
+        /* adds holder and content into LazyWrite stack */
+        LazyWrite.render(temp.id, content);
+        
+        /* controls when LazyWrite to start render stack */
+        setTimeout(LazyWrite.start, 5000);
+    })();
+    </script>
+</body>
+</html>
