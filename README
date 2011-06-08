@@ -20,8 +20,8 @@ Example: Google AdSense
     google_ad_slot = "9902234827";
     google_ad_width = 728;
     google_ad_height = 90;
-    document.write('<script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js"><\/script>');
+    document.write('<script src="http://pagead2.googlesyndication.com/pagead/show_ads.js"><\/script>');
 </script>
 <script type="text/javascript">
-    $(document).ready(LazyWrite.start);  // use jQuery
+    $(document).ready(LazyWrite.process);  // use jQuery
 </script>
