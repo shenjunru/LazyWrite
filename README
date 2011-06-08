@@ -6,22 +6,32 @@ Advantages
 * Stop freezing client navigator
 * Forget iframe calls
 * No other library required (like jQuery)
-* No change of existing code
-
-How to use:
-1. load the lazywrite.js before you start to use 'document.write()' or 'document.writeln()'.
-   or use 'LazyWrite.render("holder", "content")' to add your stuff.
-2. use 'LazyWrite.start()' to start render or load those resources.
+* No(or less) change of existing code
 
 Example: Google AdSense
-<script type="text/javascript" src="lazywrite.js"></script>
-<script type="text/javascript">
+<script src="lazywrite.js"></script>
+<script>
     google_ad_client = "ca-pub-5840687392233497";
     google_ad_slot = "9902234827";
     google_ad_width = 728;
     google_ad_height = 90;
     document.write('<script src="http://pagead2.googlesyndication.com/pagead/show_ads.js"><\/script>');
 </script>
-<script type="text/javascript">
-    $(document).ready(LazyWrite.process);  // use jQuery
-</script>
+<script>$(document).ready(LazyWrite.process); // jQuery</script>
+
+API:
+* LazyWrite.write()
+  original document.write function.
+
+* LazyWrite.prepare()
+  replace original document.write functions by lazy engine.
+  run once when the LazyWrite loaded.
+
+* LazyWrite.render(content, [holder], [callback])
+  add content to later render.
+
+* LazyWrite.process()
+  start to process the contents.
+
+* LazyWrite.findScripts()
+  find and add all custom typed script elements.
