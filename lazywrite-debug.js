@@ -1,13 +1,13 @@
 /*!
  * LazyWrite - deferred document.write implementation
- * Version: 1.0 beta build 20110608
+ * Version: 1.0 beta build 20110609
  * Website: http://github.com/xfsn/LazyWrite
  *
  * Copyright (c) 2011 Shen Junru
  * Released under the MIT License.
  */
 
-(function(document, isIE, globalEval, undefined){
+(function(window, document, isIE, globalEval, undefined){
 
 var
 _index = 1,
@@ -53,6 +53,17 @@ _error = function(ex){
     _currntWrite.ex.push(ex);
 },
 
+// event handler of window.onerror
+_errorCatch = function(message, url){
+    logger('==WINDOW.ONERROR CATCHED EXCEPTION===============');
+    logger('message: ' + message);
+    logger('url: ' + url);
+    if (_scriptBlocker && (url === _scriptBlocker.src) && !_scriptBlocker._error) {
+        _error(message);
+        return true;
+    }
+},
+
 // append the element to holder element
 // return the appended element
 _appendElement = function(holder, element){
@@ -94,9 +105,30 @@ _cloneScript = function cloneScript(script){
     return result;
 },
 
+// event handler of script.onload
+_onScriptLoad = function(scriptHolder, script){
+    script.done = true;
+    logger('script executed');
+
+    // handle memory leak in IE
+    // can't set as undefined
+    script[_loadEvent] = script.onerror = null;
+    // remove script holder, if it still in the document
+    _removeElement(scriptHolder);
+
+    if (_scriptBlocker === script) {
+        // release the script blocker
+        _scriptBlocker = undefined;
+        logger('unblock: ' + script.src);
+        // continue the stack executing
+        _continue();
+    }
+},
+
 // load script element
 _loadScript = function(scriptHolder, script){
     if (script.src) {
+        // handle onload event
         script[_loadEvent] = function(){
             logger('==SCRIPT EVENT====================================');
             logger('blocker: '    + (_scriptBlocker ? _scriptBlocker.src : 'none'));
@@ -111,25 +143,20 @@ _loadScript = function(scriptHolder, script){
                 if (state === 'loaded' && !script.loaded) {
                     script.loaded = true;
                     setTimeout(arguments.callee);
-                } else {
-                    script.done = true;
-                    logger('script executed');
-
-                    // handle memory leak in IE
-                    // can't set as undefined
-                    script[_loadEvent] = null;
-                    // remove script holder, if it still in the document
-                    _removeElement(scriptHolder);
-
-                    if (_scriptBlocker === script) {
-                        // release the script blocker
-                        _scriptBlocker = undefined;
-                        logger('unblock: ' + script.src);
-                        // continue the stack executing
-                        _continue();
-                    }
-                }
+                } else _onScriptLoad(scriptHolder, script);
             }
+        };
+
+        // handle load exception
+        // Chrome, IE9, FireFox: NON-EXISTS, TIMEOUT
+        // Safari: NON-EXISTS
+        script.onerror = function(event){
+            _logger('==SCRIPT.ONERROR CATCHED EXCEPTION===============');
+            script._error = event;
+            // log exception
+            _error(event);
+            // trig onload handler
+            _onScriptLoad(scriptHolder, script);
         };
 
         // set the script blocker
@@ -287,7 +314,7 @@ _continue = function(){
     if (_executeScripts()) {
         try {
             // execute callback function
-            _currntWrite.cb && _currntWrite.cb(_currntWrite);
+            _currntWrite.cb && _currntWrite.cb(_currntWrite.ex);
         } catch (ex) {
             _error(ex);
         }
@@ -333,7 +360,8 @@ _lazyEngine = function(){
     write: _origin,
 
     /**
-     * add content to later render
+     * add content to later render,
+     * callback function has one parameter: {Array} exceptions - catched exceptions
      * @param {String} content content to later render
      * @param {String|Function} holder [optional] place holder id or callback function
      * @param {Function} callback [optional] callback function
@@ -358,7 +386,7 @@ _lazyEngine = function(){
 
     /**
      * process all custom typed script elements
-     * @param {String} type 
+     * @param {String} type custom script type, default is 'text/lazyjs'
      */
     findScripts: function(type){
         type = type || _lazyType;
@@ -380,7 +408,16 @@ _lazyEngine = function(){
     }
 }).prepare();
 
-})(document, /*@cc_on!@*/!1, function(){
+// handle srcipt load exception
+// Chrome, IE, FireFox: RUNTIME-EXCEPTION
+// this does not work, if IE has script debugging turned on. the default is off.
+// see: http://msdn.microsoft.com/en-us/library/ms976144#weberrors2_topic3
+window.onerror = _errorCatch;
+//window.addEventListener
+//    ? window.addEventListener('error', _errorCatch, false)
+//    : window.attachEvent('onerror', _errorCatch);
+
+})(window, document, /*@cc_on!@*/!1, function(){
     eval.apply(window, arguments);
 });
 
