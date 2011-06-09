@@ -340,19 +340,20 @@ _lazyEngine = function(){
     findScripts: function(type){
         type = type || _lazyType;
 
-        var holder, require, i = 0,
-        scripts = [].slice.call(document.querySelectorAll
-            ? document.querySelectorAll('script[type="' + type + '"]')
-            : document.getElementsByTagName('script'));
-
-        for (; i < scripts.length; i++) if (type === scripts[i].type) {
-            _replaceElement(scripts[i], holder = _createHolder());
-            if (require = scripts[i].getAttribute('require')) {
-                _appendElement(_renderParser, document.createElement('script')).src = require;
+        var _scripts = document.getElementsByTagName('script'),
+            holder, require, len, i = 0, scripts = [];
+        
+        if (_scripts) {
+            for (len = _scripts.length; i < len; i++) scripts[i] = _scripts[i];
+            for (i = 0; i < len; i++) if (type === scripts[i].type) {
+                _replaceElement(scripts[i], holder = _createHolder());
+                if (require = scripts[i].getAttribute('require')) {
+                    _appendElement(_renderParser, document.createElement('script')).src = require;
+                }
+                _appendElement(_renderParser, scripts[i]);
+                _addContent(_renderParser.innerHTML, holder.id = _lazyPrefix + _index++);
+                _renderParser.innerHTML = '';
             }
-            _appendElement(_renderParser, scripts[i]);
-            _addContent(_renderParser.innerHTML, holder.id = _lazyPrefix + _index++);
-            _renderParser.innerHTML = '';
         }
     }
 }).prepare();
