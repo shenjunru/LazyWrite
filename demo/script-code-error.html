@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Test: Script State - BAD</title>
+    <title>Test: Script CODE-ERROR</title>
     <script type="text/javascript" src="../lazywrite-min.js"></script>
 </head>
 <body>
@@ -12,8 +12,9 @@
     <script type="text/javascript">
         var logger = document.getElementById('logger');
         
-        LazyWrite.render('<script src="script-state-bad.js"><\/script>', function(errors){
-            logger.innerHTML += errors;
+        LazyWrite.render('<script src="script-code-error.js"><\/script>', function(errors){
+            logger.innerHTML += 'errors: ' + errors + '<br>';
+            logger.innerHTML += 'test done.<br>';
         });
         LazyWrite.process();
         

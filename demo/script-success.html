@@ -2,17 +2,17 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Test: Script FILE-NON-EXISTS</title>
+    <title>Test: Script SUCCESS</title>
     <script type="text/javascript" src="../lazywrite-min.js"></script>
 </head>
 <body>
-    <h1>Test: Script FILE-NON-EXISTS</h1><hr />
+    <h1>Test: Script SUCCESS</h1><hr />
     
     <div id="logger"></div>
     <script type="text/javascript">
         var logger = document.getElementById('logger');
         
-        LazyWrite.render('<script src="http://0.0.0.0/non-exists.js"><\/script>', function(errors){
+        LazyWrite.render('<script src="script-success.js"><\/script>', function(errors){
             logger.innerHTML += 'errors: ' + errors + '<br>';
             logger.innerHTML += 'test done.<br>';
         });

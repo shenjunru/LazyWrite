@@ -1,6 +1,6 @@
 /*!
  * LazyWrite - deferred document.write implementation
- * Version: 1.0 beta build 20110609
+ * Version: 1.0 beta build 20110610
  * Website: http://github.com/xfsn/LazyWrite
  *
  * Copyright (c) 2011 Shen Junru
@@ -91,6 +91,7 @@ _cloneScript = function cloneScript(script){
 
 // event handler of script.onload
 _onScriptLoad = function(scriptHolder, script){
+    clearTimeout(script._tid);
     script.done = true;
 
     // handle memory leak in IE
@@ -124,8 +125,8 @@ _loadScript = function(scriptHolder, script){
         };
 
         // handle load exception
-        // Chrome, IE9, FireFox: NON-EXISTS, TIMEOUT
-        // Safari: NON-EXISTS
+        // for Chrome, IE9, FireFox: NON-EXISTS, TIMEOUT
+        // for Safari: NON-EXISTS
         script.onerror = function(event){
             script._error = event;
             // log exception
@@ -141,6 +142,13 @@ _loadScript = function(scriptHolder, script){
         setTimeout(function(){
             _appendElement(scriptHolder, script);
         });
+
+        // load timeout
+        // for IE<8, Opera: catch NON-EXISTS, TIMEOUT, RUNTIME-EXCEPTION
+        script._tid = setTimeout(function(){
+            _error('unknow');
+            _onScriptLoad(scriptHolder, script);
+        }, 60500);
     } else {
         // handle FF 3.6 script non-immediate-execute issue
         // use eval instead insert script element to document
@@ -342,7 +350,7 @@ _lazyEngine = function(){
 
         var _scripts = document.getElementsByTagName('script'),
             holder, require, len, i = 0, scripts = [];
-        
+
         if (_scripts) {
             for (len = _scripts.length; i < len; i++) scripts[i] = _scripts[i];
             for (i = 0; i < len; i++) if (type === scripts[i].type) {
@@ -359,7 +367,7 @@ _lazyEngine = function(){
 }).prepare();
 
 // handle srcipt load exception
-// Chrome, IE, FireFox: RUNTIME-EXCEPTION
+// for Chrome, IE, FireFox: RUNTIME-EXCEPTION
 // this does not work, if IE has script debugging turned on. the default is off.
 // see: http://msdn.microsoft.com/en-us/library/ms976144#weberrors2_topic3
 window.onerror = _errorCatch;
