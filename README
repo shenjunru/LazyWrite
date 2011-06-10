@@ -8,6 +8,15 @@ Advantages
 * No other library required (like jQuery)
 * No(or less) change of existing code
 
+Browser Support:
+* IE      [tested on v6+]
+* FireFox [tested on v2+]
+* Chrome  [tested on v5+]
+* Safari  [tested on v4+]
+* Opera   [tested on v9.6+]
+
+Demo: http://project.xfsn.net/lazywrite/demo/index.html
+
 Example: Google AdSense
 <script src="lazywrite.js"></script>
 <script>
@@ -27,11 +36,12 @@ API:
   replace original document.write functions by lazy engine.
   run once when the LazyWrite loaded.
 
-* LazyWrite.render(content, [holder], [callback])
+* LazyWrite.render(String content, [String holder], [Function callback])
   add content to later render.
+  callback function has one parameter: an array of catched exceptions.
 
 * LazyWrite.process()
   start to process the contents.
 
-* LazyWrite.findScripts()
+* LazyWrite.findScripts([String type])
   find and add all custom typed script elements.

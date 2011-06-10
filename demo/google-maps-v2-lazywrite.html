@@ -3,7 +3,7 @@
 <head>
     <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
     <title>Google Maps JavaScript API Example: Simple Map</title>
-    <script type="text/lazyjs" require="http://maps.google.com/maps?file=api&v=2&sensor=false&key=ABQIAAAAzr2EBOXUKnm_jVnk0OJI7xSosDVG8KKPE1-m51RBrvYughuyMxQ-i1QfUnH94QxWIa6N4U6MouMmBA">
+    <script type="text/lazyjs" require="http://maps.google.com/maps?file=api&v=2&sensor=false&key=ABQIAAAAXW4mGRt7JsdAbCFCKTWAURQvZCWcp5TpH2_IjqK2u0PI0UVTlhQudNvEJ9kqJ25FPenTmsQsOEMk_g">
     if (GBrowserIsCompatible()) {
         var map = new GMap2(document.getElementById("map_canvas_1"));
         map.setCenter(new GLatLng(37.4419, -122.1419), 13);
@@ -14,10 +14,10 @@
 <body>
     <h1>Google Maps v2</h1><hr />
     
-    <h2>Type - 1</h2>
+    <h2>Type - 1: Use LazyWrite.findScripts()</h2>
     <div id="map_canvas_1" style="width: 500px; height: 300px"></div>
     <hr />
-    <h2>Type - 2</h2>
+    <h2>Type - 2: Use LazyWrite.render()</h2>
     <div id="map_canvas_2" style="width: 500px; height: 300px"></div>
     
     <script type="text/javascript" src="../lazywrite-min.js"></script>
@@ -33,7 +33,7 @@
     LazyWrite.findScripts();
     
     /* type - 2: use LazyWrite.render API */
-    LazyWrite.render('<script src="http://maps.google.com/maps?file=api&v=2&sensor=false&key=ABQIAAAAzr2EBOXUKnm_jVnk0OJI7xSosDVG8KKPE1-m51RBrvYughuyMxQ-i1QfUnH94QxWIa6N4U6MouMmBA"><\/script>', function(){
+    LazyWrite.render('<script src="http://maps.google.com/maps?file=api&v=2&sensor=false&key=ABQIAAAAXW4mGRt7JsdAbCFCKTWAURQvZCWcp5TpH2_IjqK2u0PI0UVTlhQudNvEJ9kqJ25FPenTmsQsOEMk_g"><\/script>', function(){
         if (GBrowserIsCompatible()) {
             var map = new GMap2(document.getElementById("map_canvas_2"));
             map.setCenter(new GLatLng(37.4419, -122.1419), 13);
@@ -42,7 +42,7 @@
     });
     
     /* delay 5 seconds to process */
-    setTimeout(LazyWrite.process, 5000);
+    setTimeout(LazyWrite.process, 3000);
     </script>
     <hr />The End! <a href="index.html"><< back to index</a>
 </body>
