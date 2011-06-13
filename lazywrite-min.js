@@ -1,6 +1,6 @@
 /*
  * LazyWrite - deferred document.write implementation
- * Version: 1.0 beta build 20110610
+ * Version: 1.0 build 20110610
  * Website: http://github.com/xfsn/LazyWrite
  *
  * Copyright (c) 2011 Shen Junru
