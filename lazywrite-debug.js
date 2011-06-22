@@ -256,7 +256,10 @@ _renderHTML = function(renderHolder, html, inside){
     // render in the document
     if (_previousHolder === renderHolder) {
         // append the stack after last script stack in the global script stack.
-        _scriptStack = (newStack = _scriptStack.n.concat(stack)).concat(oldStack = _scriptStack.o);
+        _scriptStack = (
+            // remove executed stack item frist
+            newStack = _scriptStack.n.slice(_scriptStack.l - _scriptStack.length).concat(stack)
+        ).concat(oldStack = _scriptStack.o);
         _scriptStack.n = newStack;
         _scriptStack.o = oldStack;
         
@@ -277,6 +280,8 @@ _renderHTML = function(renderHolder, html, inside){
             ? renderHolder.parentNode.insertBefore(_renderFragment, renderHolder.nextSibling)
             :_replaceElement(renderHolder, _renderFragment);
     }
+
+    _scriptStack.l = _scriptStack.length;
 
     // store current render holder as previous holder
     _previousHolder = renderHolder;
