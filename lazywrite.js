@@ -1,6 +1,6 @@
 /*!
  * LazyWrite - deferred document.write implementation
- * Version: 1.0 build 20110610
+ * Version: 1.01 build 20110622
  * Website: http://github.com/xfsn/LazyWrite
  *
  * Copyright (c) 2011 Shen Junru
@@ -199,7 +199,8 @@ _renderHTML = function(renderHolder, html, inside){
     }
 
     var stack = [], // store the the scripts and their holders over this rendering.
-        scripts = _renderParser.getElementsByTagName('script');
+        scripts = _renderParser.getElementsByTagName('script'),
+        oldStack, newStack;
 
     // replace script elements by script holders
     while (scripts[0]) {
@@ -208,8 +209,6 @@ _renderHTML = function(renderHolder, html, inside){
             holder: _replaceElement(scripts[0], element = _createHolder())
         });
     }
-    // put the stack at the top of the global script stack.
-    _scriptStack = stack.concat(_scriptStack);
 
     // convert to DocumentFragment
     while (_renderParser.firstChild) {
@@ -218,9 +217,19 @@ _renderHTML = function(renderHolder, html, inside){
 
     // render in the document
     if (_previousHolder === renderHolder) {
+        // append the stack after last script stack in the global script stack.
+        _scriptStack = (newStack = _scriptStack.n.concat(stack)).concat(oldStack = _scriptStack.o);
+        _scriptStack.n = newStack;
+        _scriptStack.o = oldStack;
+        
         // insert before the parallel holder
         _parallelHolder.parentNode.insertBefore(_renderFragment, _parallelHolder);
     } else {
+        // put the stack at the top of the global script stack.
+        _scriptStack = stack.concat(oldStack = _scriptStack);
+        _scriptStack.n = stack;
+        _scriptStack.o = oldStack;
+    
         // append the parallel holder
         _parallelHolder = _renderFragment.appendChild(_parallelHolder || _createHolder());
 
@@ -235,7 +244,7 @@ _renderHTML = function(renderHolder, html, inside){
     _previousHolder = renderHolder;
 
     // execute scripts and return continue flag
-    if (stack.length) _continued = _executeScripts();
+    if (_continued && stack.length) _continued = _executeScripts();
 
     // return continue flag
     return _continued;
@@ -299,13 +308,11 @@ _addContent = function(content, holder, callback){
 // lazy write function
 _lazyEngine = function(){
     var html = _combine.call(arguments, '');
-    if (html) if (_started) {
+    if (html) if (_started) try {
         // render HTML directly
-        try {
-            _renderHTML(_scriptHolder, html, true);
-        } catch (ex) {
-            _error(ex);
-        }
+        _renderHTML(_scriptHolder, html, true);
+    } catch (ex) {
+        _error(ex);
     } else _addContent(html);
 };
 
