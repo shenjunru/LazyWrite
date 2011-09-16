@@ -1,6 +1,6 @@
 /*!
  * LazyWrite - deferred document.write implementation
- * Version: 1.01 build 20110622
+ * Version: 1.01 build 20110916
  * Website: http://github.com/xfsn/LazyWrite
  *
  * Copyright (c) 2011 Shen Junru
@@ -16,7 +16,23 @@ _scriptFix  = /^\s*<!--/,
 _lazyPrefix = 'lazy-holder-',
 _lazyType   = 'text/lazyjs',
 
+// partial html writing check, like:
+//  document.write('<script>');
+//  document.write('alert("ok")');
+//  document.write('<\/script>');
+_partial  = '',
+_tagName  = '', 
+_tagCheck = /<([a-z]+)(?:\s+[^>\/\s]+(?:=['"].*['"])?)*\s*>\s*$/i,
+_tagOpen  = function(html){
+    _tagName = ((html = html.match(_tagCheck)) || [])[1] || _tagName;
+    return html;
+},
+_tagClose = function(html){
+    return !_tagName || new RegExp('</' + _tagName + '>', 'i').test(html);
+},
+
 // original functions
+_onerror = window.onerror,
 _write   = document.write,
 _writeln = document.writeln,
 _origin  = _write.apply
@@ -46,14 +62,6 @@ _combine = [].join,
 // error catcher
 _error = function(ex){
     _currntWrite.ex.push(ex);
-},
-
-// event handler of window.onerror
-_errorCatch = function(message, url){
-    if (_scriptBlocker && (url === _scriptBlocker.src) && !_scriptBlocker._error) {
-        _error(message);
-        return true;
-    }
 },
 
 // append the element to holder element
@@ -313,12 +321,19 @@ _addContent = function(content, holder, callback){
 // lazy write function
 _lazyEngine = function(){
     var html = _combine.call(arguments, '');
-    if (html) if (_started) try {
-        // render HTML directly
-        _renderHTML(_scriptHolder, html, true);
-    } catch (ex) {
-        _error(ex);
-    } else _addContent(html);
+    if (html) if (_tagOpen(html)) {
+        return _partial += html;
+    } else if (_tagClose(html)) {
+        html = _partial + html, _tagName = _partial = '';
+        if (_started) try {
+            // render HTML directly
+            _renderHTML(_scriptHolder, html, true);
+        } catch (ex) {
+            _error(ex);
+        } else _addContent(html);
+    } else {
+        _partial += html;
+    }
 };
 
 (window.LazyWrite = {
@@ -382,10 +397,13 @@ _lazyEngine = function(){
 // for Chrome, IE, FireFox: RUNTIME-EXCEPTION
 // this does not work, if IE has script debugging turned on. the default is off.
 // see: http://msdn.microsoft.com/en-us/library/ms976144#weberrors2_topic3
-window.onerror = _errorCatch;
-//window.addEventListener
-//    ? window.addEventListener('error', _errorCatch, false)
-//    : window.attachEvent('onerror', _errorCatch);
+// can't use addEventListener or attachEvent
+window.onerror = function(message, url){
+    if (_scriptBlocker && (url === _scriptBlocker.src) && !_scriptBlocker._error) {
+        _error(message);
+    }
+    _onerror && _onerror.apply(window, arguments);
+};
 
 })(window, document, /*@cc_on!@*/!1, function(){
     eval.apply(window, arguments);
