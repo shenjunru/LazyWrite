@@ -343,7 +343,7 @@ _lazyEngine = function(){
     }
 };
 
-(window.LazyWrite = {
+window.LazyWrite = {
     /**
      * original document.write function
      * @param {String} content content to write into document
@@ -398,7 +398,7 @@ _lazyEngine = function(){
             }
         }
     }
-}).prepare();
+};
 
 // handle srcipt load exception
 // for Chrome, IE, FireFox: RUNTIME-EXCEPTION

@@ -1,6 +1,6 @@
 /*!
  * LazyWrite - deferred document.write implementation
- * Version: 1.01 build 20110916
+ * Version: 1.1 build 20111012
  * Website: http://github.com/xfsn/LazyWrite
  *
  * Copyright (c) 2011 Shen Junru
@@ -22,13 +22,20 @@ _lazyType   = 'text/lazyjs',
 //  document.write('<\/script>');
 _partial  = '',
 _tagName  = '', 
-_tagCheck = /<([a-z]+)(?:\s+[^>\/\s]+(?:=['"].*['"])?)*\s*>\s*$/i,
+_tagMatch = /<([a-z]+)(?:\s+[a-z]+(?:=(?:'[^']*'|"[^"]*"|[^'">\s]*))?)*\s*>/i,
 _tagOpen  = function(html){
-    _tagName = ((html = html.match(_tagCheck)) || [])[1] || _tagName;
-    return html;
+    var index, name, match = _tagMatch.exec(html);
+    while (match) {
+        name = match[1];
+        if (-1 === (index = html.indexOf('</' + name + '>', match[0].length))) {
+            return _tagName = name;
+        } else {
+            match = _tagMatch.exec(html = html.slice(index + name.length + 3));
+        }
+    }
 },
 _tagClose = function(html){
-    return !_tagName || new RegExp('</' + _tagName + '>', 'i').test(html);
+    return !_tagName || (-1 !== html.indexOf('</' + _tagName + '>'));
 },
 
 // original functions
