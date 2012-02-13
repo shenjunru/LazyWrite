@@ -1,6 +1,6 @@
 /*!
  * LazyWrite - deferred document.write implementation
- * Version: 1.1 build 20111012
+ * Version: 1.1 build 20120213
  * Website: http://github.com/xfsn/LazyWrite
  *
  * Copyright (c) 2011 Shen Junru
@@ -420,6 +420,7 @@ _lazyEngine = function(){
     process: function(){
         if (_started) return;
         _started = true;
+        this.prepare();
         _renderStack();
     },
 
