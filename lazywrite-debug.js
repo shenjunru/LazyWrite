@@ -1,6 +1,6 @@
 /*!
  * LazyWrite - deferred document.write implementation
- * Version: 1.1 build 20120213
+ * Version: 1.1 build 20120403
  * Website: http://github.com/xfsn/LazyWrite
  *
  * Copyright (c) 2011 Shen Junru
@@ -324,9 +324,7 @@ _renderStack = function(){
         _parallelHolder && _removeElement(_parallelHolder);
 
         // destroy objects
-        _renderFragment
-            = _renderParser
-            = _scriptHolder
+        _scriptHolder
             = _scriptBlocker
             = _previousHolder
             = _parallelHolder
@@ -338,6 +336,10 @@ _renderStack = function(){
         document.write = document.writeln = function(){
             alert(_combine.call(arguments, ''));
         };
+        
+        
+        // restore flag
+        _started = false;
     }
 },
 
