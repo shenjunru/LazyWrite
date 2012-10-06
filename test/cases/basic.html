@@ -1,0 +1,43 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Test Case: Basic</title>
+  <script src="../../lazywrite-min.js"></script>
+</head>
+<body>
+  <h1>Test Case: Basic</h1><hr />
+
+  <script>
+    document.write('<b>test - 1</b><script>document.write("<i> ok</i>")<\/script>');
+  </script>
+  <br>
+  <script>
+    document.write('<b>test - 2</b><script>document.write(" ok1 ");document.write(" ok2")<\/script>');
+  </script>
+  <br>
+  <script>
+    document.write('<b>test - 3</b><script>document.write(" ok1 ");<\/script><script>document.write(" ok2")<\/script>');
+  </script>
+  <br>
+  <script>
+    document.write('<b>test - 4</b><script>document.write(" ok");<\/script><script src="basic.php"><\/script>');
+  </script>
+  <br>
+  <script>
+    document.write('<b>test - 5</b><script>document.write(" ok");<\/script><script src="basic.js"><\/script>');
+  </script>
+  <br>
+  <script>
+    document.write('<b>test - 6</b><script>document.write(" ok");<\/script><script src="basic.js"><\/script>');
+  </script>
+  <br>
+  <script>
+    document.write('<b>test - 7</b><script>top.nextCase();<\/script>');
+  </script>
+  <br>
+  <script>LazyWrite.process();</script>
+
+  <hr />The End! <a href="../index.html"><< back to index</a>
+</body>
+</html>

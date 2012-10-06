@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Test: LazyWrite.js</title>
+  <link href="qunit/qunit.css" rel="stylesheet">
+  <script src="qunit/qunit.js"></script>
+</head>
+<body>
+<div id="qunit"></div>
+<iframe id="casePage" src="about:blank" frameborder="1" style="width:1px; height:1px; visibility: hidden;"></iframe>
+<script>
+  var casePage  = document.getElementById('casePage');
+      validator = false;
+      pages = {
+          'basic.html': function(document, content){
+              return /test - 1 ok/.test(content)
+                  && /test - 2\s+ok1\s+ok2/.test(content)
+                  && /test - 3\s+ok1\s+ok2/.test(content)
+                  && /test - 4\s+ok\s+external\[php\]/.test(content)
+                  && /test - 5\s+ok\s+external\[js\]\s+external\[php\]/.test(content)
+                  && /test - 6\s+ok\s+external\[js\]\s+external\[php\]/.test(content)
+                  && /test - 7/.test(content)
+                  && /test - 7/.test(content);
+          }
+      };
+
+  function nextCase(){
+      if (validator) {
+          var document = (casePage.contentDocument || casePage.document);
+              content  = document.documentElement;
+          ok(validator(document, content.innerText || content.textContent), 'test passed!');
+          validator = false;
+          start();
+      }
+
+      for (var page in pages) {
+          validator = pages[page];
+          asyncTest(page, 1, function(){
+              casePage.src = 'cases/' + page;
+          });
+          delete pages[page];
+          break;
+      }
+  }
+  nextCase();
+</script>
+</body>
+</html>

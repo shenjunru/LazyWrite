@@ -1,2 +1,2 @@
-<?php sleep(5); ?>
+/*<?php sleep(2); ?>*/
 document.write(' external[php]');

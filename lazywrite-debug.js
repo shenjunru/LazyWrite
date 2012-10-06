@@ -1,474 +1,550 @@
 /*!
- * LazyWrite - deferred document.write implementation
- * Version: 1.1 build 20120403
- * Website: http://github.com/xfsn/LazyWrite
- *
- * Copyright (c) 2011 Shen Junru
- * Released under the MIT License.
+ * LazyWrite 1.2 (sha1: 92a9f46e8bbebbd3d6a84e1b0c6ae2f4cae30075)
+ * (c) 2011 Shen Junru. MIT License.
+ * http://github.com/shenjunru/LazyWrite
  */
 
-(function(window, document, isIE, globalEval, undefined){
-
-var
-_index = 1,
-_loadEvent  = isIE ? 'onreadystatechange' : 'onload',
-_scriptFix  = /^\s*<!--/,
-_lazyPrefix = 'lazy-holder-',
-_lazyType   = 'text/lazyjs',
-
-// partial html writing check, like:
-//  document.write('<script>');
-//  document.write('alert("ok")');
-//  document.write('<\/script>');
-_partial  = '',
-_tagName  = '', 
-_tagMatch = /<([a-z]+)(?:\s+[a-z]+(?:=(?:'[^']*'|"[^"]*"|[^'">\s]*))?)*\s*>/i,
-_tagOpen  = function(html){
-    var index, name, match = _tagMatch.exec(html);
-    while (match) {
-        name = match[1];
-        if (-1 === (index = html.indexOf('</' + name + '>', match[0].length))) {
-            return _tagName = name;
-        } else {
-            match = _tagMatch.exec(html = html.slice(index + name.length + 3));
-        }
-    }
-},
-_tagClose = function(html){
-    return !_tagName || (-1 !== html.indexOf('</' + _tagName + '>'));
-},
-
-// original functions
-_onerror = window.onerror,
-_write   = document.write,
-_writeln = document.writeln,
-_origin  = _write.apply
-    ? function(){ _write.apply(document, arguments); }
-    : /* handle IE issue */ _write,
-
-// render helper elements
-_renderFragment = document.createDocumentFragment(),
-_renderParser   = document.createElement('div'),
-_scriptHolder   = undefined, // for multiple document.write in one inside script
-_scriptBlocker  = undefined, // for external loading and stack executing
-_previousHolder = undefined, // for same render holder checking
-_parallelHolder = undefined, // for render in same render holder
-
-// data storage
-_writeStack  = [], // store the HTML that use document.write in the page
-_scriptStack = [], // store the script and it's holder
-_currntWrite = undefined, // current write item
-
-// flags
-_started   = false,
-_continued = true,
-
-// combine an array
-_combine = [].join,
-
-logger = function(message){
-    console.log(message);
-},
-
-// error catcher
-_error = function(ex){
-    logger('Exception: ' + ex);
-    _currntWrite.ex.push(ex);
-},
-
-// append the element to holder element
-// return the appended element
-_appendElement = function(holder, element){
-    return holder.appendChild(element);
-},
-
-// remove the element from the document, if it in the document
-// return the removed element
-_removeElement = function(element){
-    return element.parentNode ? element.parentNode.removeChild(element) : element;
-},
-
-// replace the element by the new element
-// return the replace element
-_replaceElement = function(element, other){
-    logger('==REPLACE ELEMENT=================================');
-    logger('original: ' + (element.id || element.nodeName));
-    logger('original content: ' + element.innerHTML);
-    logger('replace: ' + (other.id || other.nodeName));
-    logger('replace content: ' + (other.innerHTML || other.src || other.text || ('[' + other.childNodes.length + ']')));
-    return element.parentNode.replaceChild(other, element) && other;
-},
-
-// return a new holder element
-_createHolder = function(prefix){
-    var holder = document.createElement('span');
-    holder.id = prefix + _index++;
-    logger('create holder: <' + holder.id + '>');
-    return holder;
-},
-
-// clone a script element for cross browser issue
-// return the new script element
-_cloneScript = function cloneScript(script){
-    var result = document.createElement('script');
-    result.type = script.type;
-    if (script.src) result.src  = script.src;
-    else result.text = script.text;
-    return result;
-},
-
-// event handler of script.onload
-_onScriptLoad = function(scriptHolder, script){
-    clearTimeout(script._tid);
-    script.done = true;
-    logger('script executed');
-
-    // handle memory leak in IE
-    // can't set as undefined
-    script[_loadEvent] = script.onerror = null;
-    // remove script holder, if it still in the document
-    _removeElement(scriptHolder);
-
-    if (_scriptBlocker === script) {
-        // release the script blocker
-        _scriptBlocker = undefined;
-        logger('unblock: ' + script.src);
-        // continue the stack executing
-        _continue();
-    }
-},
-
-// load script element
-_loadScript = function(scriptHolder, script){
-    if (script.src) {
-        // handle onload event
-        script[_loadEvent] = function(){
-            logger('==SCRIPT EVENT====================================');
-            logger('blocker: '    + (_scriptBlocker ? _scriptBlocker.src : 'none'));
-            logger('load url: '   + script.src);
-            logger('load state: ' + (script.readyState || '->onload'));
-            logger('load flag: '  + script.loaded);
-            logger('continue: '   + _continued);
-            var state = isIE && script.readyState;
-            if (!script.done && (!state || /complete|loaded/.test(state))) {
-                // handle IE readyState issue, simulate the 'complete' readyState
-                // waiting the load script be executed.
-                if (state === 'loaded' && !script.loaded) {
-                    script.loaded = true;
-                    setTimeout(arguments.callee);
-                } else _onScriptLoad(scriptHolder, script);
-            }
-        };
-
-        // handle load exception
-        // for Chrome, IE9, FireFox: NON-EXISTS, TIMEOUT
-        // for Safari: NON-EXISTS
-        script.onerror = function(event){
-            _logger('==SCRIPT.ONERROR CATCHED EXCEPTION===============');
-            script._error = event;
-            // log exception
-            _error(event);
-            // trig onload handler
-            _onScriptLoad(scriptHolder, script);
-        };
-
-        // set the script blocker
-        _scriptBlocker = script;
-        logger('block: ' + script.src);
-
-        // postpone load the script file
-        setTimeout(function(){
-            _appendElement(scriptHolder, script);
+(function(factory, globalEval, window, document, isIE){
+    if ('function' === typeof define && define.amd) {
+        // AMD. Register as an anonymous module.
+        define(function(){
+            return factory(globalEval, window, document, isIE, false);
         });
-
-        // load timeout
-        // for IE<8, Opera: catch NON-EXISTS, TIMEOUT, RUNTIME-EXCEPTION
-        script._tid = setTimeout(function(){
-            _error('unknow');
-            _onScriptLoad(scriptHolder, script);
-        }, 60500);
     } else {
-        // handle FF 3.6 script non-immediate-execute issue
-        // use eval instead insert script element to document
-        try {
-            // handle IE eval() SyntaxError.
-            globalEval(script.text.replace(_scriptFix, ''));
-        } catch (ex) {
-            _error(ex);
+        // Browser globals
+        window.LazyWrite = factory(globalEval, window, document, isIE, false !== window.AUTO_LAZYWRITE);
+    }
+}(function(globalEval, window, document, isIE, autoHook, undef){
+
+    var seed = 1,
+        lazyType    = 'text/lazyjs',
+        lazyPrefix  = 'lazy-holder-',
+        scriptEvent = isIE ? 'onreadystatechange' : 'onload',
+        readyStates = { complete:1, loaded: 1 },
+
+        // handle IE eval() SyntaxError.
+        rFixEval = /^\s*<!--/,
+
+        // check html partial writing, like:
+        //  document.write('<script>');
+        //  document.write('alert("ok")');
+        //  document.write('<\/script>');
+        rHtmlTag = /<([a-z]+)(?:\s+[a-z]+(?:=(?:'[^']*'|"[^"]*"|[^'">\s]*))?)*\s*>/i,
+        sPartial = '',
+        sHtmlTag = '',
+
+        // render helper elements
+        renderFragment = document.createDocumentFragment(),
+        renderParser   = createElement('div'),
+        scriptBlocker  = undef, // for external loading and stack executing
+        scriptHolder   = undef, // for multiple document.write in one inside script
+        previousHolder = undef, // for same render holder checking
+        parallelHolder = undef, // for render in same render holder
+
+        // data storage
+        writeStack   = [], // store the HTML that use document.write in the page
+        scriptStack  = [], // store the script and it's holder
+        currentWrite = undef, // current write item
+
+        // flags
+        started   = false,
+        continued = true,
+
+        // array join function
+        combine = [].join,
+
+        // original functions
+        originalWrite   = document.write,
+        originalWriteln = document.writeln,
+        originalOnError = window.onerror,
+        documentWrite = originalWrite.apply
+            ? function(){ originalWrite.apply(document, arguments); }
+            : /* handle IE issue */ originalWrite;
+
+
+    function log(message){
+        console.log(message);
+    }
+
+    // error catcher
+    function logError(ex){
+        log('Exception: ' + ex);
+        currentWrite.errors.push(ex);
+    }
+
+    // append the element to holder element
+    // return the appended element
+    function appendElement(holder, element){
+        return holder.appendChild(element);
+    }
+
+    // remove the element from the document, if it in the document
+    // return the removed element
+    function removeElement(element){
+        return element.parentNode ? element.parentNode.removeChild(element) : element;
+    }
+
+    // replace the element by the new element
+    // return the replace element
+    function replaceElement(element, other){
+        log('==REPLACE ELEMENT=================================');
+        log('original: ' + (element.id || element.nodeName));
+        log('original content: ' + element.innerHTML);
+        log('replace: ' + (other.id || other.nodeName));
+        log('replace content: ' + (other.innerHTML || other.src || other.text || ('[' + other.childNodes.length + ']')));
+        return element.parentNode.replaceChild(other, element) && other;
+    }
+
+    function createElement(tagName){
+        return document.createElement(tagName);
+    }
+
+    // return a new holder element
+    function createHolder(){
+        var holder = createElement('span');
+        holder.id = prefix + seed++;
+        log('create holder: <' + holder.id + '>');
+        return holder;
+    }
+
+    // clone a script element for cross browser issue
+    // return the new script element
+    function cloneScript(script){
+        var result = createElement('script');
+        result.type = script.type;
+        if (script.src) {
+            result.src  = script.src;
+        } else {
+            result.text = script.text;
         }
+        return result;
+    }
+
+    // event handler of script.onload
+    function scriptComplete(scriptHolder, script, memo){
+        clearTimeout(memo.timeout);
+        memo.done = true;
+        log('script executed');
+
+        // prevent memory leak in IE
+        script.onerror = script[scriptEvent] = '';
 
         // remove script holder, if it still in the document
-        _removeElement(scriptHolder);
-    }
-},
+        removeElement(scriptHolder);
 
-// execute one item of scripts stack
-// return continue flag
-_executeScript = function(renderHolder, item){
-    if (item) {
-        logger('==EXECUTE SCRIPT==================================');
-        logger('render holder: ' + (renderHolder ? renderHolder.id : 'none'));
-        logger('script holder: ' + (item ? item.holder.id : 'none'));
-        logger('blocker: '    + (_scriptBlocker ? _scriptBlocker.src : 'none'));
-        logger('content: ' + (item ? item.script.src || item.script.text : 'none'));
-        // set the script holder as the render holder for inside 'document.write'.
-        if (!_scriptBlocker) _scriptHolder = item.holder;
+        if (memo === scriptBlocker) {
+            // release the script blocker
+            scriptBlocker = undef;
+            log('unblock: ' + memo.src);
 
-        // load / execute script
-        _loadScript(item.holder, item.script = _cloneScript(item.script));
-
-        // return continue flag
-        return !item.script.src;
-    }
-},
-
-// execute the global scripts stack
-// return continue flag
-_executeScripts = function(renderHolder, flag/* this isn't a parameter */){
-    while ((flag = _executeScript(renderHolder, _scriptStack.shift())));
-    return flag !== false && !_scriptBlocker;
-},
-
-// render one document.write stuff
-// return continue flag
-_renderHTML = function(renderHolder, html, inside){
-    logger('==RENDER HTML====================================');
-    logger('render holder: ' + renderHolder.id);
-    logger('previous holder: ' + (_previousHolder ? _previousHolder.id : 'none'));
-    logger('render holder parent: ' + (renderHolder.parentNode ? renderHolder.parentNode.id : 'none'));
-    logger('previous holder parent: ' + (_previousHolder && _previousHolder.parentNode ? _previousHolder.parentNode.id : 'none'));
-    logger('html: ' + html);
-
-    // convert HTML
-    if (isIE) {
-        // handle IE innerHTML issue
-        _renderParser.innerHTML = '<img />' + html;
-        _removeElement(_renderParser.firstChild);
-    } else {
-        _renderParser.innerHTML = html;
+            // continue the stack executing
+            executeStacks();
+        }
     }
 
-    var stack = [], // store the the scripts and their holders over this rendering.
-        scripts = _renderParser.getElementsByTagName('script'),
-        oldStack, newStack;
+    // load script element
+    function loadScript(scriptHolder, script){
+        if (script.src) {
+            var memo = { src: script.src };
 
-    // replace script elements by script holders
-    while (scripts[0]) {
-        stack.push({
-            script: scripts[0],
-            holder: _replaceElement(scripts[0], element = _createHolder('script_holder_'))
-        });
+            // handle onload event
+            script[scriptEvent] = function(){
+                log('==SCRIPT EVENT====================================');
+                log('blocker: '    + (scriptBlocker ? scriptBlocker.src : 'none'));
+                log('load url: '   + script.src);
+                log('load state: ' + (script.readyState || '->onload'));
+                log('load flag: '  + script.loaded);
+                log('continue: '   + continued);
+
+                var state = isIE && script.readyState;
+                if (!memo.done && (!state || readyStates[state])) {
+                    if (state === 'loaded' && !memo.loaded) {
+                        // handle IE readyState issue
+                        // simulate the 'complete' readyState
+                        memo.loaded = true;
+                        setTimeout(script[scriptEvent]);
+                    } else {
+                        scriptComplete(scriptHolder, script, memo);
+                    }
+                }
+            };
+
+            // handle load exception
+            // Chrome, FireFox, IE9+: NON-EXISTS, TIMEOUT
+            // Safari: NON-EXISTS
+            script.onerror = function(event){
+                log('==SCRIPT.ONERROR CATCHED EXCEPTION===============');
+                // log exception
+                logError(memo.error = event);
+                // trig onload handler
+                scriptComplete(scriptHolder, script, memo);
+            };
+
+            // postpone load the script file
+            setTimeout(function(){
+                appendElement(scriptHolder, script);
+            });
+
+            // load timeout
+            // IE<8, Opera: NON-EXISTS, TIMEOUT, RUNTIME-EXCEPTION
+            memo.timeout = setTimeout(function(){
+                logError('unknow');
+                scriptComplete(scriptHolder, script, memo);
+            }, 60500);
+
+            // set the script blocker
+            scriptBlocker = memo;
+            log('block: ' + script.src);
+        } else {
+            // handle FF 3.6 script non-immediate-execute issue
+            // use eval instead insert script element to document
+            try {
+                globalEval(script.text.replace(rFixEval, ''));
+            } catch (ex) {
+                logError(ex);
+            }
+
+            // remove script holder, if it still in the document
+            removeElement(scriptHolder);
+        }
     }
 
-    // convert to DocumentFragment
-    while (_renderParser.firstChild) {
-        _renderFragment.appendChild(_renderParser.firstChild);
-    }
-
-    // render in the document
-    if (_previousHolder === renderHolder) {
-        // append the stack after last script stack in the global script stack.
-        _scriptStack = (
-            // remove executed stack item frist
-            newStack = _scriptStack.n.slice(_scriptStack.l - _scriptStack.length).concat(stack)
-        ).concat(oldStack = _scriptStack.o);
-        _scriptStack.n = newStack;
-        _scriptStack.o = oldStack;
-        
-        // insert before the parallel holder
-        _parallelHolder.parentNode.insertBefore(_renderFragment, _parallelHolder);
-    } else {
-        // put the stack at the top of the global script stack.
-        _scriptStack = stack.concat(oldStack = _scriptStack);
-        _scriptStack.n = stack;
-        _scriptStack.o = oldStack;
-    
-        // append the parallel holder
-        _parallelHolder = _renderFragment.appendChild(_parallelHolder || _createHolder('parallel_holder_'));
-
-        // replace holder in the document
-        inside
-            // handle IE6 subsequent replaceChild() issue in Windows XP
-            ? renderHolder.parentNode.insertBefore(_renderFragment, renderHolder.nextSibling)
-            :_replaceElement(renderHolder, _renderFragment);
-    }
-
-    _scriptStack.l = _scriptStack.length;
-
-    // store current render holder as previous holder
-    _previousHolder = renderHolder;
-
-    // execute scripts and return continue flag
-    if (_continued && stack.length) _continued = _executeScripts(renderHolder);
-    _continued ? logger('<< RENDER CONTINUING <<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
-               : logger('<< RENDER STOPING <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<');
-
+    // execute one item of scripts stack
     // return continue flag
-    return _continued;
-},
+    function executeScript(item, renderHolder){
+        if (item) {
+            log('==EXECUTE SCRIPT==================================');
+            log('render holder: ' + (renderHolder ? renderHolder.id : 'none'));
+            log('script holder: ' + (item ? item.holder.id : 'none'));
+            log('blocker: '    + (scriptBlocker ? scriptBlocker.src : 'none'));
+            log('content: ' + (item ? item.script.src || item.script.text : 'none'));
+            // set the script holder as the render holder for inside 'document.write'.
+            if (!scriptBlocker) {
+                scriptHolder = item.holder;
+            }
 
-// render one item of the global write stack
-// return continue flag
-_renderWrite = function(item){
-    logger('##################################################');
-    return item && item.html && _renderHTML(document.getElementById(item.id), item.html);
-},
+            // load / execute script
+            loadScript(item.holder, item.script = cloneScript(item.script));
 
-// render the global write stack
-_renderStack = function(){
-    while(_renderWrite(_currntWrite = _writeStack.shift()));
-    logger('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$');
-    if (_continued && !_writeStack.length) {
-        logger('>> END OF LAZY WRITE <<');
-        // remove parallel holder, if it exists
-        _parallelHolder && _removeElement(_parallelHolder);
-
-        // destroy objects
-        _scriptHolder
-            = _scriptBlocker
-            = _previousHolder
-            = _parallelHolder
-            = undefined;
-
-        // restore original functions
-//        document.write = _write;
-//        document.writeln = _writeln;
-        document.write = document.writeln = function(){
-            alert(_combine.call(arguments, ''));
-        };
-        
-        
-        // restore flag
-        _started = false;
+            // return continue flag
+            return !item.script.src;
+        }
     }
-},
 
-// continue the rest stack (script and write)
-_continue = function(){
-    logger('>> continue() <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<');
-    _continued = true;
-    if (_executeScripts()) {
-        try {
-            // execute callback function
-            _currntWrite.cb && _currntWrite.cb(_currntWrite.ex);
-        } catch (ex) {
-            _error(ex);
+    // execute the global scripts stack
+    // return continue flag
+    function executeScripts(renderHolder){
+        for (var flag; flag = executeScript(scriptStack.shift(), renderHolder););
+        return flag !== false && !scriptBlocker;
+    }
+
+    // render one document.write stuff
+    // return continue flag
+    function renderHTML(renderHolder, html, inside){
+        log('==RENDER HTML====================================');
+        log('render holder: ' + renderHolder.id);
+        log('previous holder: ' + (previousHolder ? previousHolder.id : 'none'));
+        log('render holder parent: ' + (renderHolder.parentNode ? renderHolder.parentNode.id : 'none'));
+        log('previous holder parent: ' + (previousHolder && previousHolder.parentNode ? previousHolder.parentNode.id : 'none'));
+        log('html: ' + html);
+
+        // convert HTML
+        if (isIE) {
+            // handle IE innerHTML issue
+            renderParser.innerHTML = '<img />' + html;
+            removeElement(renderParser.firstChild);
+        } else {
+            renderParser.innerHTML = html;
         }
 
-        _renderStack();
+        var stack = [], // store the the scripts and their holders over this rendering.
+            scripts = renderParser.getElementsByTagName('script'),
+            oldStack, newStack;
+
+        // replace script elements by script holders
+        while (scripts[0]) {
+            stack.push({
+                script: scripts[0],
+                holder: replaceElement(scripts[0], createHolder('script_holder_'))
+            });
+        }
+
+        // convert to DocumentFragment
+        while (renderParser.firstChild) {
+            renderFragment.appendChild(renderParser.firstChild);
+        }
+
+        // render in the document
+        if (previousHolder === renderHolder) {
+            // append the stack after last script stack in the global script stack.
+            scriptStack = (
+                // remove executed stack item first
+            newStack = scriptStack.n.slice(scriptStack.l - scriptStack.length).concat(stack)
+            ).concat(oldStack = scriptStack.o);
+            scriptStack.n = newStack;
+            scriptStack.o = oldStack;
+
+            // insert before the parallel holder
+            parallelHolder.parentNode.insertBefore(renderFragment, parallelHolder);
+        } else {
+            // put the stack at the top of the global script stack.
+            scriptStack = stack.concat(oldStack = scriptStack);
+            scriptStack.n = stack;
+            scriptStack.o = oldStack;
+
+            // append the parallel holder
+            parallelHolder = renderFragment.appendChild(parallelHolder || createHolder('parallel_holder_'));
+
+            // replace holder in the document
+            if (inside) {
+                // handle IE6 subsequent replaceChild() issue in Windows XP
+                renderHolder.parentNode.insertBefore(renderFragment, renderHolder.nextSibling);
+            } else {
+                replaceElement(renderHolder, renderFragment);
+            }
+        }
+
+        scriptStack.l = scriptStack.length;
+
+        // store current render holder as previous holder
+        previousHolder = renderHolder;
+
+        // execute scripts and return continue flag
+        if (continued && stack.length) {
+            continued = executeScripts();
+        }
+
+        if (continued) {
+            log('<< RENDER CONTINUING <<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
+        } else {
+            log('<< RENDER STOPING <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<');
+        }
+
+        // return continue flag
+        return continued;
     }
-},
 
-// add content to write stack
-_addContent = function(content, holder, callback){
-    if (typeof callback !== 'function') callback = undefined;
-    if (typeof holder   === 'function') callback = holder, holder = undefined;
-
-    // write a place holder in the document
-    holder || _origin('<span id="' + (holder = _lazyPrefix + _index++) + '"></span>');
-
-    // add to write stack
-    _writeStack.push({ id: holder, html: content, cb: callback, ex: [] });
-},
-
-// lazy write function
-_lazyEngine = function(){
-    var html = _combine.call(arguments, '');
-    logger('==DOCUMENT.WRITE==================================');
-    logger('started: ' + _started);
-    logger('script holder: ' + (_scriptHolder ? _scriptHolder.id : 'none'));
-    logger('html: ' + html);
-    if (html) if (_tagOpen(html)) {
-        return _partial += html;
-    } else if (_tagClose(html)) {
-        html = _partial + html, _tagName = _partial = '';
-        if (_started) try {
-            // render HTML directly
-            _renderHTML(_scriptHolder, html, true);
-        } catch (ex) {
-            _error(ex);
-        } else _addContent(html);
-    } else {
-        _partial += html;
+    // render one item of the global write stack
+    // return continue flag
+    function renderWrite(item){
+        log('##################################################');
+        return item && item.html && renderHTML(document.getElementById(item.id), item.html);
     }
-};
 
-(window.LazyWrite = {
-    /**
-     * original document.write function
-     * @param {String} content content to write into document
-     */ 
-    write: _origin,
+    // render the global write stack
+    function renderStack(){
+        while (renderWrite(currentWrite = writeStack.shift()));
+        log('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$');
+        if (continued && !writeStack.length) {
+            log('>> END OF LAZY WRITE <<');
+            // remove parallel holder, if it exists
+            if (parallelHolder) {
+                removeElement(parallelHolder);
+            }
 
-    /**
-     * add content to later render,
-     * callback function has one parameter: {Array} exceptions - catched exceptions
-     * @param {String} content content to later render
-     * @param {String|Function} holder [optional] place holder id or callback function
-     * @param {Function} callback [optional] callback function
-     */ 
-    render: _addContent,
+            // destroy objects
+            scriptBlocker
+                = scriptHolder
+                = previousHolder
+                = parallelHolder
+                = undef;
 
-    /**
-     * replace original document.write functions by lazy engine
-     */ 
-    prepare: function(){
-        document.writeln = document.write = _lazyEngine;
-    },
+            // restore original functions
+//            document.write = originalWrite;
+//            document.writeln = originalWriteln;
+            document.write = document.writeln = function(){
+                alert(combine.call(arguments, ''));
+            };
 
-    /**
-     * start to process the contents
-     */
-    process: function(){
-        if (_started) return;
-        _started = true;
-        this.prepare();
-        _renderStack();
-    },
+            // restore flag
+            started = false;
+        }
+    }
 
-    /**
-     * process all custom typed script elements
-     * @param {String} type custom script type, default is 'text/lazyjs'
-     */
-    findScripts: function(type){
-        type = type || _lazyType;
-
-        var _scripts = document.getElementsByTagName('script'),
-            holder, require, len, i = 0, scripts = [];
-
-        if (_scripts) {
-            for (len = _scripts.length; i < len; i++) scripts[i] = _scripts[i];
-            for (i = 0; i < len; i++) if (type === scripts[i].type) {
-                _replaceElement(scripts[i], holder = _createHolder());
-                if (require = scripts[i].getAttribute('require')) {
-                    _appendElement(_renderParser, document.createElement('script')).src = require;
+    // continue the rest stack (script and write)
+    function executeStacks(){
+        log('>> continue() <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<');
+        continued = true;
+        if (executeScripts()) {
+            try {
+                // execute callback function
+                if (currentWrite.callback) {
+                    currentWrite.callback(currentWrite.errors);
                 }
-                _appendElement(_renderParser, scripts[i]);
-                _addContent(_renderParser.innerHTML, holder.id = _lazyPrefix + _index++);
-                _renderParser.innerHTML = '';
+            } catch (ex) {
+                logError(ex);
+            }
+
+            renderStack();
+        }
+    }
+
+    /**
+     * add content to write stack
+     *
+     * @param {String} content - content to later render
+     * @param {String} [holderId] - place holder id
+     * @param {Function} [callback] - function(errors Array)
+     */
+    function addContent(content, holderId, callback){
+        if ('function' !== typeof callback) {
+            callback = undef;
+        }
+        if ('function' === typeof holderId) {
+            callback = holderId;
+            holderId = undef;
+        }
+
+        // write a place holder in the document
+        if (!holderId) {
+            documentWrite('<span id="' + (holderId = lazyPrefix + seed++) + '"></span>');
+        }
+
+        // add to write stack
+        writeStack.push({ id: holderId, html: content, callback: callback, errors: [] });
+    }
+
+    // check html end with a opened tag
+    function tagOpened(html){
+        var index, name, match = rHtmlTag.exec(html);
+        while (match) {
+            name = match[1];
+            if (-1 === (index = html.indexOf('</' + name + '>', match[0].length))) {
+                return (sHtmlTag = name);
+            } else {
+                match = rHtmlTag.exec(html = html.slice(index + name.length + 3));
             }
         }
     }
-}).prepare();
 
-// handle srcipt load exception
-// for Chrome, IE, FireFox: RUNTIME-EXCEPTION
-// this does not work, if IE has script debugging turned on. the default is off.
-// see: http://msdn.microsoft.com/en-us/library/ms976144#weberrors2_topic3
-// can't use addEventListener or attachEvent
-window.onerror = function(message, url){
-    logger('==WINDOW.ONERROR CATCHED EXCEPTION===============');
-    logger('message: ' + message);
-    logger('url: ' + url);
-    if (_scriptBlocker && (url === _scriptBlocker.src) && !_scriptBlocker._error) {
-        _error(message);
+    // check html is closed
+    function tagClosed(html){
+        return !sHtmlTag || (-1 !== html.indexOf('</' + sHtmlTag + '>'));
     }
-    _onerror && _onerror.apply(window, arguments);
-};
 
-})(window, document, /*@cc_on!@*/!1, function(){
+    // lazy write
+    function lazyWrite(){
+        var html = combine.call(arguments, '');
+        log('==DOCUMENT.WRITE==================================');
+        log('started: ' + started);
+        log('script holder: ' + (scriptHolder ? scriptHolder.id : 'none'));
+        log('html: ' + html);
+
+        if (html) {
+            if (tagOpened(html)) {
+                // html tag is not closed
+                // wait close html tag
+                sPartial += html;
+            } else if (tagClosed(html)) {
+                // html tag is closed
+
+                // get intact html
+                html = sPartial + html;
+
+                // clear status
+                sHtmlTag = sPartial = '';
+
+                if (started) {
+                    try {
+                        // render HTML directly
+                        renderHTML(scriptHolder, html, true);
+                    } catch (ex) {
+                        logError(ex);
+                    }
+                } else {
+                    addContent(html);
+                }
+            } else {
+                sPartial += html;
+            }
+        }
+    }
+
+    // replace original document.write functions by lazy write
+    function hookWrite(){
+        document.writeln = document.write = lazyWrite;
+    }
+
+    // handle srcipt load exception
+    // Chrome, IE, FireFox: RUNTIME-EXCEPTION
+    // this does not work, if IE has script debugging turned on. the default is off.
+    // see: http://msdn.microsoft.com/en-us/library/ms976144#weberrors2_topic3
+    // can't use addEventListener or attachEvent
+    window.onerror = function(message, url){
+        log('==WINDOW.ONERROR CATCHED EXCEPTION===============');
+        log('message: ' + message);
+        log('url: ' + url);
+        if (scriptBlocker && (url === scriptBlocker.src) && !scriptBlocker.error) {
+            logError(message);
+        }
+        if (originalOnError) {
+            originalOnError.apply(window, arguments);
+        }
+    };
+
+    if (autoHook) {
+        hookWrite();
+    }
+
+    return {
+        /** original document.write function */
+        write: documentWrite,
+
+        /** replace original function */
+        prepare: hookWrite,
+
+        /**
+         * add content to later render
+         *
+         * @param {String} content - content to later render
+         * @param {String} [holder] - place holder id
+         * @param {Function} [callback] - function(errors Array)
+         */
+        render: addContent,
+
+        /** start to process the contents */
+        process: function(){
+            if (started) {
+                return;
+            }
+            started = true;
+            this.prepare();
+            renderStack();
+        },
+
+        /**
+         * process all custom typed script elements
+         *
+         * @param {String} [type='text/lazyjs'] - custom script type
+         */
+        findScripts: function(type){
+            type = type || lazyType;
+
+            var scripts = document.getElementsByTagName('script'),
+                index   = scripts.length - 1,
+                matches = [],
+                script, holder, src;
+
+            for (; -1 < index; index--) {
+                if (type === scripts[index].type) {
+                    matches.push(scripts[index]);
+                }
+            }
+            for (; script = matches.pop() ;) {
+                replaceElement(script, holder = createHolder());
+                if (src = script.getAttribute('src')) {
+                    appendElement(renderParser, createElement('script')).src = src;
+                }
+                appendElement(renderParser, script);
+                addContent(renderParser.innerHTML, holder.id = lazyPrefix + seed++);
+                renderParser.innerHTML = '';
+            }
+        }
+    };
+
+}, function(){
     eval.apply(window, arguments);
-});
+}, window, document, /*@cc_on!@*/!1));
 
 if (!window.console) console = {};
 if (!console.log) console.log = window.opera ? opera.postError : function(){};
