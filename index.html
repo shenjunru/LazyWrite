@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Lazywrite : JavaScript: deferred document.write implementation" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Lazywrite</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/shenjunru/LazyWrite">View on GitHub</a>
+
+          <h1 id="project_title">Lazywrite</h1>
+          <h2 id="project_tagline">JavaScript: deferred document.write implementation</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/shenjunru/LazyWrite/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/shenjunru/LazyWrite/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <p>LazyWrite is build to have the best compromise between a good page load and write a complex external data in your page (like Advertising).
+This allow you to control when should those data start to render or load.<br>
+Size: less than 3.4KB (2KB gzipped) using UglifyJS.</p>
+
+<h2>Advantages</h2>
+
+<ul>
+<li>Increase highly the page load</li>
+<li>Stop freezing client navigator</li>
+<li>Forget iframe calls</li>
+<li>No other library required (like jQuery)</li>
+<li>No(or less) change of existing code</li>
+</ul><h2>Browser Support:</h2>
+
+<ul>
+<li>IE      [tested on v6+]</li>
+<li>FireFox [tested on v2+]</li>
+<li>Chrome  [tested on v5+]</li>
+<li>Safari  [tested on v4+]</li>
+<li>Opera   [tested on v9.6+]</li>
+</ul><h2>API: ("LazyWrite" global variable)</h2>
+
+<h3><code>.write()</code></h3>
+
+<ul>
+<li>original document.write function.</li>
+</ul><h3><code>.prepare()</code></h3>
+
+<ul>
+<li>Replaces original <code>document.write()</code> with lazy write.</li>
+<li>This function will auto executes when "lazywrite.js" loaded.</li>
+<li>To prevent auto executing, sets <code>AUTO_LAZYWRITE = false;</code> before loads "lazywrite.js".</li>
+</ul><h3><code>.render(content String [, holderId String] [, callback(errors Array) Function])</code></h3>
+
+<ul>
+<li>postpones content rendering in the given holder element or current place (like <code>document.write()</code>).</li>
+<li>An array of all caught exceptions will passes to the <code>callback()</code>.</li>
+</ul><h3><code>.process()</code></h3>
+
+<ul>
+<li>Starts to render all contents.</li>
+<li>When all content be rendered, it will restores the original <code>document.write()</code>.</li>
+</ul><h3><code>.findScripts([String type])</code></h3>
+
+<ul>
+<li>Finds and stacks all custom typed script elements.</li>
+</ul><h2>As <a href="http://wiki.commonjs.org/wiki/Modules/AsynchronousDefinition">AMD Module</a>
+</h2>
+
+<ul>
+<li>No global variable <code>LazyWrite</code>.</li>
+<li>no <code>.prepare()</code> auto executing.</li>
+</ul><h2>Example: Google AdSense</h2>
+
+<pre><code>&lt;script src="lazywrite-min.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+    google_ad_client = "ca-pub-5840687392233497";
+    google_ad_slot = "9902234827";
+    google_ad_width = 728;
+    google_ad_height = 90;
+    document.write('&lt;script src="//pagead2.googlesyndication.com/pagead/show_ads.js"&gt;&lt;\/script&gt;');
+    setTimeout(LazyWrite.process, 3000); // delay 3sec
+&lt;/script&gt;
+</code></pre>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Lazywrite maintained by <a href="https://github.com/shenjunru">shenjunru</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-35375054-1");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+
+  </body>
+</html>
