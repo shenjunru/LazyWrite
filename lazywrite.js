@@ -1,5 +1,5 @@
 /*!
- * LazyWrite 1.2 (sha1: 92a9f46e8bbebbd3d6a84e1b0c6ae2f4cae30075)
+ * LazyWrite 1.2 (sha1: abd326ef7ba7c8182839fc7f9e80aba5ba79b81a)
  * (c) 2011 Shen Junru. MIT License.
  * http://github.com/shenjunru/LazyWrite
  */
@@ -16,7 +16,8 @@
     }
 }(function(globalEval, window, document, isIE, autoHook, undef){
 
-    var seed = 1,
+    var expose,
+        seed = 1,
         lazyType    = 'text/lazyjs',
         lazyPrefix  = 'lazy-holder-',
         scriptEvent = isIE ? 'onreadystatechange' : 'onload',
@@ -429,7 +430,7 @@
         hookWrite();
     }
 
-    return {
+    return expose = {
         /** original document.write function */
         write: documentWrite,
 
@@ -451,7 +452,7 @@
                 return;
             }
             started = true;
-            this.prepare();
+            expose.prepare();
             renderStack();
         },
 

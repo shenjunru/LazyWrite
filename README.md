@@ -4,7 +4,7 @@ LazyWrite is build to have the best compromise between a good page load and writ
 This allow you to control when should those data start to render or load.<br>
 Size: less than 3.4KB (2KB gzipped) using UglifyJS.
 
-# Advantages
+## Advantages
 * Increase highly the page load
 * Stop freezing client navigator
 * Forget iframe calls
@@ -42,6 +42,9 @@ Size: less than 3.4KB (2KB gzipped) using UglifyJS.
 ## As [AMD Module](http://wiki.commonjs.org/wiki/Modules/AsynchronousDefinition)
 * No global variable `LazyWrite`.
 * no `.prepare()` auto executing.
+
+## Limitation:
+* Can't use `document.getElement*()` functions to get the writing element in the processing.
 
 ## Example: Google AdSense
     <script src="lazywrite-min.js"></script>
