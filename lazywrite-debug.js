@@ -1,5 +1,5 @@
 /*!
- * LazyWrite 1.2 (sha1: abd326ef7ba7c8182839fc7f9e80aba5ba79b81a)
+ * LazyWrite 1.2.1 (sha1: 4dad37cb515c671323bc5110f385585c39141301)
  * (c) 2011 Shen Junru. MIT License.
  * http://github.com/shenjunru/LazyWrite
  */
@@ -31,6 +31,7 @@
         //  document.write('alert("ok")');
         //  document.write('<\/script>');
         rHtmlTag = /<([a-z]+)(?:\s+[a-z]+(?:=(?:'[^']*'|"[^"]*"|[^'">\s]*))?)*\s*>/i,
+        rNoEnd   = /area|base|br|col|frame|hr|img|input|link|meta|param/i,
         sPartial = '',
         sHtmlTag = '',
 
@@ -409,11 +410,14 @@
     function tagOpened(html){
         var index, name, match = rHtmlTag.exec(html);
         while (match) {
+            html = html.slice(match.index + match[0].length, html.length);
             name = match[1];
-            if (-1 === (index = html.indexOf('</' + name + '>', match[0].length))) {
-                return (sHtmlTag = name);
-            } else {
+            if (rNoEnd.test(name)) {
+                match = rHtmlTag.exec(html);
+            } else if (-1 !== (index = html.indexOf('</' + name + '>'))) {
                 match = rHtmlTag.exec(html = html.slice(index + name.length + 3));
+            } else {
+                return (sHtmlTag = name);
             }
         }
     }
