@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Test Case: Google AdSense</title>
+  <script src="../../lazywrite-min.js"></script>
+</head>
+<body>
+  <h1>Test Case: Google AdSense</h1><hr />
+
+  <div id="google_adsense">
+    <script>
+        google_ad_client = "ca-pub-5840687392233497";
+        /* LazyWrite.js Test Case */
+        google_ad_slot = "7501135156";
+        google_ad_width = 728;
+        google_ad_height = 90;
+        document.write('<script src="//pagead2.googlesyndication.com/pagead/show_ads.js"><\/script>');
+    </script>
+    <script>
+        document.write('<script>top.nextCase();<\/script>');
+    </script>
+  </div>
+  <script>LazyWrite.process();</script>
+
+  <hr />The End! <a href="../index.html"><< back to index</a>
+</body>
+</html>

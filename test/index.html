@@ -3,15 +3,15 @@
 <head>
   <meta charset="utf-8">
   <title>Test: LazyWrite.js</title>
-  <link href="qunit/qunit.css" rel="stylesheet">
-  <script src="qunit/qunit.js"></script>
+  <link href="http://code.jquery.com/qunit/qunit-1.11.0.css" rel="stylesheet">
+  <script src="http://code.jquery.com/qunit/qunit-1.11.0.js"></script>
 </head>
 <body>
 <div id="qunit"></div>
 <iframe id="casePage" src="about:blank" frameborder="1" style="width:1px; height:1px; visibility: hidden;"></iframe>
 <script>
-  var casePage  = document.getElementById('casePage');
-      validator = false;
+  var casePage  = document.getElementById('casePage'),
+      validator = false,
       pages = {
           'basic.html': function(document, content){
               return /test - 1 ok/.test(content)
@@ -22,6 +22,11 @@
                   && /test - 6\s+ok\s+external\[js\]\s+external\[php\]/.test(content)
                   && /test - 7/.test(content)
                   && /test - 7/.test(content);
+          },
+
+          'google-adsense.html': function(document, content){
+              var iframe = document.getElementsByTagName('iframe')[0];
+              return !!iframe && 90 === iframe.offsetHeight && 728 === iframe.offsetWidth;
           }
       };
 
