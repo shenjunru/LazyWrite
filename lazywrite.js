@@ -1,6 +1,6 @@
 /*!
- * LazyWrite 1.2.1 (sha1: 4dad37cb515c671323bc5110f385585c39141301)
- * (c) 2011 Shen Junru. MIT License.
+ * LazyWrite 1.2.2 (sha1: 0d13acd1f14a59fae9dc446fc3f41d55d403c07a)
+ * (c) 2011~2015 Shen Junru. MIT License.
  * http://github.com/shenjunru/LazyWrite
  */
 
@@ -30,10 +30,11 @@
         //  document.write('<script>');
         //  document.write('alert("ok")');
         //  document.write('<\/script>');
-        rHtmlTag = /<([a-z]+)(?:\s+[a-z]+(?:=(?:'[^']*'|"[^"]*"|[^'">\s]*))?)*\s*>/i,
+        rHtmlTag = /<([a-z]+)(?:\s+[a-z]+(?:=(?:'[^']*'|"[^"]*"|[^'">\s]*))?)*\s*(>?)/i,
         rNoEnd   = /area|base|br|col|frame|hr|img|input|link|meta|param/i,
         sPartial = '',
-        sHtmlTag = '',
+        sOpenTag = '',
+        sHalfTag = '',
 
         // render helper elements
         renderFragment = document.createDocumentFragment(),
@@ -359,23 +360,47 @@
 
     // check html end with a opened tag
     function tagOpened(html){
-        var index, name, match = rHtmlTag.exec(html);
-        while (match) {
-            html = html.slice(match.index + match[0].length, html.length);
+        var index, name, match, _html = sHalfTag + html;
+
+        // reset
+        sHalfTag = '';
+        if (tagClosed(_html)) {
+            sOpenTag = '';
+        }
+
+        while (( match = rHtmlTag.exec(_html) )) {
+            _html = _html.slice(match.index + match[0].length);
             name = match[1];
-            if (rNoEnd.test(name)) {
-                match = rHtmlTag.exec(html);
-            } else if (-1 !== (index = html.indexOf('</' + name + '>'))) {
-                match = rHtmlTag.exec(html = html.slice(index + name.length + 3));
+
+            // handle: half open tag
+            if (!match[2]) {
+                if (!/\S/.test(_html)) {
+                    sHalfTag = match[0];
+                    return (sOpenTag = sOpenTag || name);
+                }
+                if (/=$/.test(match[0]) && /^['"]/.test(_html)) {
+                    sHalfTag = match[0] + _html;
+                    return (sOpenTag = sOpenTag || name);
+                }
+
+            // handle: no end tag
+            } else if (rNoEnd.test(name)) {
+                // do nothing
+
+            // handle: matched end tag
+            } else if (-1 !== (index = _html.indexOf('</' + name + '>'))) {
+                _html = _html.slice(index + name.length + 3);
+
+            // handle: no matched end tag
             } else {
-                return (sHtmlTag = name);
+                return (sOpenTag = sOpenTag || name);
             }
         }
     }
 
     // check html is closed
     function tagClosed(html){
-        return !sHtmlTag || (-1 !== html.indexOf('</' + sHtmlTag + '>'));
+        return !sOpenTag || (-1 !== html.indexOf('</' + sOpenTag + '>'));
     }
 
     // lazy write
@@ -386,6 +411,7 @@
                 // html tag is not closed
                 // wait close html tag
                 sPartial += html;
+
             } else if (tagClosed(html)) {
                 // html tag is closed
 
@@ -393,7 +419,7 @@
                 html = sPartial + html;
 
                 // clear status
-                sHtmlTag = sPartial = '';
+                sOpenTag = sPartial = sHalfTag = '';
 
                 if (started) {
                     try {
@@ -405,6 +431,7 @@
                 } else {
                     addContent(html);
                 }
+
             } else {
                 sPartial += html;
             }

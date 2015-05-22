@@ -27,14 +27,36 @@
           'google-adsense.html': function(document, content){
               var iframe = document.getElementsByTagName('iframe')[0];
               return !!iframe && 90 === iframe.offsetHeight && 728 === iframe.offsetWidth;
+          },
+
+          'issue-6': function(document, content){
+              return /^\s*aasda as \^\%\&\* d 1234 dfa 144\#\$\%\^ asdf \&\^\* as\s*$/.test(content);
           }
       };
+
+
+  function getText(element){
+      if (!element) { return null; }
+
+      var str = '';
+      if (element.childNodes.length === 0 && element.nodeType == 3) {
+          str += element.nodeValue;
+      }
+
+      for (var i = 0; i < element.childNodes.length; i++) {
+          if (element.childNodes[i].nodeType == 3) {
+              str += element.childNodes[i].nodeValue;
+          }
+      }
+
+      return str;
+  }
 
   function nextCase(){
       if (validator) {
           var document = (casePage.contentDocument || casePage.document);
               content  = document.documentElement;
-          ok(validator(document, content.innerText || content.textContent), 'test passed!');
+          ok(validator(document, content.innerText || getText(content)), 'test passed!');
           validator = false;
           start();
       }

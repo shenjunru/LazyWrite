@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="../../lazywrite-min.js"></script>
+</head>
+<body>
+<script>
+  document.write("<scr"+"ipt type='text/javascript' src='");
+  document.write("does-not-matter.js");
+  document.write("'></scr"+"ipt><div id=\"el_text\"");
+  document.write("> <p>aa");
+  document.write("sda as ^%&* ");
+  document.write("d 1234 <sp");
+  document.write("an>  dfa 1");
+  document.write("44#$%^  </sp");
+  document.write("an>  asdf ");
+  document.write("&^* as </p></div>");
+  document.write('<script>top.nextCase();<\/script>');
+  setTimeout(LazyWrite.process, 2000);
+  /* text => "aasda as ^%&* d 1234 dfa 144#$%^ asdf &^* as" */
+</script>
+</div>
+</body>
+</html>
