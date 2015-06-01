@@ -60,9 +60,7 @@
         originalWrite   = document.write,
         originalWriteln = document.writeln,
         originalOnError = window.onerror,
-        documentWrite = originalWrite.apply
-            ? function(){ originalWrite.apply(document, arguments); }
-            : /* handle IE issue */ originalWrite;
+        documentWrite = (originalWrite.apply) ? function(){ originalWrite.apply(document, arguments); } : originalWrite /* handle IE issue */;
 
 
     // error catcher
@@ -207,7 +205,11 @@
     // execute the global scripts stack
     // return continue flag
     function executeScripts(){
-        for (var flag; flag = executeScript(scriptStack.shift()););
+        var flag;
+        do {
+            flag = executeScript(scriptStack.shift());
+        } while (flag);
+        
         return flag !== false && !scriptBlocker;
     }
 
@@ -243,10 +245,8 @@
         // render in the document
         if (previousHolder === renderHolder) {
             // append the stack after last script stack in the global script stack.
-            scriptStack = (
-                // remove executed stack item first
-                newStack = scriptStack.n.slice(scriptStack.l - scriptStack.length).concat(stack)
-            ).concat(oldStack = scriptStack.o);
+            // remove executed stack item first
+            scriptStack = (newStack = scriptStack.n.slice(scriptStack.l - scriptStack.length).concat(stack)).concat(oldStack = scriptStack.o);
             scriptStack.n = newStack;
             scriptStack.o = oldStack;
 
@@ -292,7 +292,10 @@
 
     // render the global write stack
     function renderStack(){
-        while (renderWrite(currentWrite = writeStack.shift()));
+        var result;
+        do {
+            result = renderWrite(currentWrite = writeStack.shift());
+        } while (result);
 
         if (continued && !writeStack.length) {
             // remove parallel holder, if it exists
@@ -301,11 +304,10 @@
             }
 
             // destroy objects
-            scriptBlocker
-                = scriptHolder
-                = previousHolder
-                = parallelHolder
-                = undef;
+            scriptBlocker = undef;
+            scriptHolder = undef;
+            previousHolder = undef;
+            parallelHolder = undef;
 
             // restore original functions
             document.write = originalWrite;
@@ -396,6 +398,7 @@
                 return (sOpenTag = sOpenTag || name);
             }
         }
+        return null;
     }
 
     // check html is closed
@@ -507,7 +510,8 @@
             }
             for (; script = matches.pop() ;) {
                 replaceElement(script, holder = createHolder());
-                if (src = script.getAttribute('src')) {
+                src = script.getAttribute('src');
+                if (src) {
                     appendElement(renderParser, createElement('script')).src = src;
                 }
                 appendElement(renderParser, script);
